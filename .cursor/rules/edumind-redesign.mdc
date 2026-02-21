@@ -1,0 +1,39 @@
+---
+description: EduMind AI tutoring platform — dark theme, glassmorphism, Framer Motion
+globs: "**/*.tsx,**/*.jsx,**/*.css,**/app/**/*,**/components/**/*"
+alwaysApply: true
+---
+
+# EduMind AI — Page Redesign Rules
+
+Apply these rules to **every** page/component redesign. Change **only visuals**; never remove or alter imports, API calls, or logic.
+
+## Theme & Colors
+
+- **Background**: `#0a0f1e` (dark)
+- **Cards**: `bg-white/5 backdrop-blur-md`
+- **Accents**: cyan `#00d4ff`, purple `#8b5cf6`, green `#10b981`
+
+## Glassmorphism Cards
+
+- `bg-white/5 backdrop-blur border border-white/10 rounded-2xl`
+- Every card: `hover:translateY(-4px)` and a subtle glow (e.g. shadow or ring on hover)
+
+## Typography
+
+- **Headings**: Space Grotesk
+- **Body**: DM Sans
+
+## Animation
+
+- Use **Framer Motion** for all animations (page transitions, hovers, entrances).
+
+## Buttons
+
+- **Primary**: gradient filled (e.g. cyan/purple gradient)
+- **Secondary**: glass outline (e.g. `border border-white/20 bg-white/5`)
+
+## Constraints
+
+- **NEVER** break existing functionality.
+- **NEVER** remove existing imports, API calls, or logic — only change styling and add/use Framer Motion where it fits.

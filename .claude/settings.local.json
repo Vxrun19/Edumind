@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install:*)",
+      "Bash(npx next build:*)",
+      "Bash(npm ls:*)",
+      "Bash(npx tsc:*)",
+      "Bash(taskkill:*)",
+      "Bash(node -e \"\nconst Anthropic = require\\(''@anthropic-ai/sdk''\\);\nconst client = new Anthropic\\({ apiKey: process.env.ANTHROPIC_API_KEY || ''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'' }\\);\nclient.messages.create\\({\n  model: ''claude-sonnet-4-6-20250514'',\n  max_tokens: 50,\n  messages: [{ role: ''user'', content: ''Say hello in 5 words'' }],\n}\\).then\\(r => console.log\\(''SUCCESS:'', r.content[0].text\\)\\).catch\\(e => console.log\\(''ERROR:'', e.status, e.message\\)\\);\n\")",
+      "Bash(node -e \"\nconst Anthropic = require\\(''@anthropic-ai/sdk''\\);\nconst client = new Anthropic\\({ apiKey: ''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'' }\\);\nclient.messages.create\\({\n  model: ''claude-sonnet-4-6-20250514'',\n  max_tokens: 50,\n  messages: [{ role: ''user'', content: ''Say hello in 5 words'' }],\n}\\).then\\(r => console.log\\(''SUCCESS:'', r.content[0].text\\)\\).catch\\(e => console.log\\(''ERROR:'', e.status, e.error || e.message\\)\\);\n\")",
+      "Bash(node -e \"\nconst Anthropic = require\\(''@anthropic-ai/sdk''\\);\nconst client = new Anthropic\\({ apiKey: ''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'' }\\);\nclient.messages.create\\({\n  model: ''claude-sonnet-4-20250514'',\n  max_tokens: 50,\n  messages: [{ role: ''user'', content: ''Say hello in 5 words'' }],\n}\\).then\\(r => console.log\\(''SUCCESS:'', r.content[0].text\\)\\).catch\\(e => console.log\\(''ERROR:'', e.status, e.error || e.message\\)\\);\n\")",
+      "Bash(dir:*)",
+      "Bash(npx next lint)",
+      "Bash(node -e:*)",
+      "Bash(findstr:*)",
+      "Bash(echo:*)"
+    ]
+  }
+}

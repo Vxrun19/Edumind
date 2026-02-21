@@ -1,0 +1,471 @@
+"use client";
+
+import { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
+
+interface TrendingTopic {
+  title: string;
+  category: string;
+  description: string;
+  trend_status: "hot" | "rising" | "new";
+  why_relevant: string;
+  difficulty: "beginner" | "intermediate" | "advanced";
+}
+
+interface SummaryData {
+  what_it_is: string;
+  why_it_matters: string;
+  how_to_start: string;
+}
+
+const CATEGORIES = [
+  "All",
+  "AI & Tech",
+  "Science",
+  "Business",
+  "World Events",
+  "Skills & Tools",
+];
+
+const TREND_ICONS: Record<string, string> = {
+  hot: "\uD83D\uDD25",
+  rising: "\uD83D\uDE80",
+  new: "\u26A1",
+};
+
+const TREND_LABELS: Record<string, string> = {
+  hot: "Hot",
+  rising: "Rising",
+  new: "New",
+};
+
+/** Trend badge glow: Hot=red, Rising=purple, New=cyan */
+const TREND_GLOW: Record<string, string> = {
+  hot: "shadow-[0_0_16px_rgba(239,68,68,0.4)] border-red-500/40 bg-red-500/20 text-red-300",
+  rising: "shadow-[0_0_16px_rgba(139,92,246,0.4)] border-[#8b5cf6]/40 bg-[#8b5cf6]/20 text-purple-300",
+  new: "shadow-[0_0_16px_rgba(0,212,255,0.4)] border-[#00d4ff]/40 bg-[#00d4ff]/20 text-cyan-300",
+};
+
+const DIFFICULTY_COLORS: Record<string, string> = {
+  beginner: "bg-[#10b981]/20 text-[#10b981] border border-[#10b981]/40",
+  intermediate: "bg-[#00d4ff]/20 text-[#00d4ff] border border-[#00d4ff]/40",
+  advanced: "bg-[#8b5cf6]/20 text-purple-300 border border-[#8b5cf6]/40",
+};
+
+/** Colored left border per category for topic cards */
+const CATEGORY_BORDER_LEFT: Record<string, string> = {
+  "AI & Tech": "border-l-[#8b5cf6]",
+  Science: "border-l-[#10b981]",
+  Business: "border-l-amber-400",
+  "World Events": "border-l-rose-400",
+  "Skills & Tools": "border-l-[#00d4ff]",
+};
+
+const CATEGORY_COLORS: Record<string, string> = {
+  "AI & Tech": "bg-[#8b5cf6]/20 text-purple-300 border border-[#8b5cf6]/40",
+  Science: "bg-[#10b981]/20 text-[#10b981] border border-[#10b981]/40",
+  Business: "bg-amber-500/20 text-amber-300 border border-amber-500/40",
+  "World Events": "bg-rose-500/20 text-rose-300 border border-rose-500/40",
+  "Skills & Tools": "bg-[#00d4ff]/20 text-[#00d4ff] border border-[#00d4ff]/40",
+};
+
+function getCategoryColor(category: string): string {
+  if (CATEGORY_COLORS[category]) return CATEGORY_COLORS[category];
+  for (const [key, value] of Object.entries(CATEGORY_COLORS)) {
+    if (category.toLowerCase().includes(key.toLowerCase().split(" ")[0])) {
+      return value;
+    }
+  }
+  return "bg-white/10 text-white/70 border border-white/20";
+}
+
+function getCategoryBorderLeft(category: string): string {
+  if (CATEGORY_BORDER_LEFT[category]) return CATEGORY_BORDER_LEFT[category];
+  for (const [key, value] of Object.entries(CATEGORY_BORDER_LEFT)) {
+    if (category.toLowerCase().includes(key.toLowerCase().split(" ")[0])) {
+      return value;
+    }
+  }
+  return "border-l-[#00d4ff]";
+}
+
+function formatTimestamp(dateStr: string): string {
+  const date = new Date(dateStr);
+  return date.toLocaleString("en-US", {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  });
+}
+
+export default function TrendingPage() {
+  const router = useRouter();
+  const [topics, setTopics] = useState<TrendingTopic[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [activeCategory, setActiveCategory] = useState("All");
+  const [generatedAt, setGeneratedAt] = useState<string | null>(null);
+  const [cooldownMessage, setCooldownMessage] = useState<string | null>(null);
+
+  // Summary modal state
+  const [summaryModal, setSummaryModal] = useState<{
+    open: boolean;
+    topic: TrendingTopic | null;
+    summary: SummaryData | null;
+    loading: boolean;
+  }>({ open: false, topic: null, summary: null, loading: false });
+
+  const fetchTopics = useCallback(async (refresh = false) => {
+    try {
+      const url = refresh ? "/api/trending?refresh=true" : "/api/trending";
+      const res = await fetch(url);
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data.error);
+
+      setTopics(data.topics);
+      setGeneratedAt(data.generated_at);
+
+      if (data.cooldown) {
+        setCooldownMessage(data.message);
+        setTimeout(() => setCooldownMessage(null), 5000);
+      }
+    } catch {
+      // Keep existing topics if refresh fails
+    }
+  }, []);
+
+  useEffect(() => {
+    setIsLoading(true);
+    fetchTopics().finally(() => setIsLoading(false));
+  }, [fetchTopics]);
+
+  async function handleRefresh() {
+    setIsRefreshing(true);
+    setCooldownMessage(null);
+    await fetchTopics(true);
+    setIsRefreshing(false);
+  }
+
+  async function handleQuickSummary(topic: TrendingTopic) {
+    setSummaryModal({ open: true, topic, summary: null, loading: true });
+
+    try {
+      const res = await fetch("/api/trending/summary", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          topic: topic.title,
+          description: topic.description,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      setSummaryModal((prev) => ({
+        ...prev,
+        summary: data.summary,
+        loading: false,
+      }));
+    } catch {
+      setSummaryModal((prev) => ({
+        ...prev,
+        summary: {
+          what_it_is: "Failed to load summary.",
+          why_it_matters: "Please try again.",
+          how_to_start: "",
+        },
+        loading: false,
+      }));
+    }
+  }
+
+  function handleLearnThis(topic: TrendingTopic) {
+    const message = encodeURIComponent(
+      `I want to learn about ${topic.title}. ${topic.why_relevant} Give me a comprehensive introduction.`
+    );
+    router.push(`/chat?trending=${encodeURIComponent(topic.title)}&msg=${message}`);
+  }
+
+  const filteredTopics =
+    activeCategory === "All"
+      ? topics
+      : topics.filter((t) => {
+          const cat = t.category.toLowerCase();
+          const filter = activeCategory.toLowerCase();
+          return (
+            cat === filter ||
+            cat.includes(filter.split(" ")[0].toLowerCase())
+          );
+        });
+
+  return (
+    <main className="min-h-[calc(100vh-57px)] bg-[#0a0f1e]">
+      {/* Hero: animated gradient title */}
+      <div className="px-4 py-12 border-b border-white/10">
+        <div className="max-w-5xl mx-auto text-center">
+          <motion.h1
+            className="text-4xl font-bold mb-3 bg-gradient-to-r from-orange-400 via-red-400 to-pink-400 bg-clip-text text-transparent"
+            style={{ backgroundSize: "200% 100%" }}
+            animate={{ backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"] }}
+            transition={{ duration: 6, repeat: Infinity, ease: "linear" }}
+          >
+            What&apos;s Hot Right Now 🔥
+          </motion.h1>
+          <p className="text-lg text-white/60 max-w-xl mx-auto">
+            Learn the latest topics everyone is talking about
+          </p>
+        </div>
+      </div>
+
+      <div className="max-w-5xl mx-auto px-4 py-8">
+        {/* Category filter: glass pill buttons with active gradient state */}
+        <div className="flex items-center gap-2 mb-6 overflow-x-auto pb-2 flex-wrap">
+          {CATEGORIES.map((cat) => (
+            <button
+              key={cat}
+              onClick={() => setActiveCategory(cat)}
+              className={`shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all border backdrop-blur-md ${
+                activeCategory === cat
+                  ? "bg-gradient-to-r from-[#8b5cf6] to-[#00d4ff] text-white border-transparent shadow-[0_0_20px_rgba(0,212,255,0.3)]"
+                  : "bg-white/5 border-white/10 text-white/80 hover:bg-white/10 hover:border-white/20"
+              }`}
+            >
+              {cat}
+            </button>
+          ))}
+
+          <div className="flex-1 min-w-[1rem]" />
+
+          {/* Refresh button with spinning animation while loading */}
+          <button
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+            className="shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium bg-white/5 border border-white/10 text-white/80 hover:bg-white/10 transition-colors disabled:opacity-70"
+          >
+            <span className={isRefreshing ? "animate-spin inline-block" : ""}>
+              🔄
+            </span>
+            {isRefreshing ? "Refreshing..." : "Refresh"}
+          </button>
+        </div>
+
+        {cooldownMessage && (
+          <div className="mb-4 text-sm text-amber-300 bg-amber-500/10 border border-amber-500/30 rounded-xl px-4 py-2 backdrop-blur-md">
+            {cooldownMessage}
+          </div>
+        )}
+
+        {/* Loading state - skeleton cards */}
+        {isLoading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div
+                key={i}
+                className="bg-white/5 border border-white/10 rounded-2xl p-5 animate-pulse"
+              >
+                <div className="h-4 bg-white/10 rounded w-3/4 mb-3" />
+                <div className="h-3 bg-white/10 rounded w-full mb-2" />
+                <div className="h-3 bg-white/10 rounded w-2/3 mb-4" />
+                <div className="flex gap-2">
+                  <div className="h-6 bg-white/10 rounded-full w-16" />
+                  <div className="h-6 bg-white/10 rounded-full w-16" />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <>
+            {/* Topic cards: glassmorphism, colored left border, stagger animate */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {filteredTopics.map((topic, i) => (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.35, delay: i * 0.05 }}
+                  className={`bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-5 flex flex-col border-l-4 ${getCategoryBorderLeft(topic.category)}`}
+                >
+                  {/* Header: title + trend badge (glow) */}
+                  <div className="flex items-start justify-between mb-2">
+                    <h3 className="text-base font-semibold text-white leading-snug flex-1 mr-2">
+                      {topic.title}
+                    </h3>
+                    <span
+                      className={`shrink-0 text-xs font-medium px-2 py-0.5 rounded-full border ${TREND_GLOW[topic.trend_status] ?? TREND_GLOW.new}`}
+                    >
+                      {TREND_ICONS[topic.trend_status]}{" "}
+                      {TREND_LABELS[topic.trend_status]}
+                    </span>
+                  </div>
+
+                  {/* Category + Difficulty */}
+                  <div className="flex items-center gap-2 mb-3">
+                    <span
+                      className={`text-xs font-medium px-2 py-0.5 rounded-full border ${getCategoryColor(topic.category)}`}
+                    >
+                      {topic.category}
+                    </span>
+                    <span
+                      className={`text-xs font-medium px-2 py-0.5 rounded-full border ${DIFFICULTY_COLORS[topic.difficulty]}`}
+                    >
+                      {topic.difficulty}
+                    </span>
+                  </div>
+
+                  {/* Description */}
+                  <p className="text-sm text-white/60 mb-4 flex-1">
+                    {topic.description}
+                  </p>
+
+                  {/* Actions: Learn This = gradient, Quick Summary = glass outline */}
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleLearnThis(topic)}
+                      className="flex-1 text-sm font-medium bg-gradient-to-r from-[#8b5cf6] to-[#00d4ff] hover:shadow-[0_0_20px_rgba(0,212,255,0.3)] text-white px-3 py-2 rounded-xl transition-all border border-white/10"
+                    >
+                      Learn This
+                    </button>
+                    <button
+                      onClick={() => handleQuickSummary(topic)}
+                      className="flex-1 text-sm font-medium bg-white/5 border border-white/20 text-white/90 hover:bg-white/10 px-3 py-2 rounded-xl transition-colors"
+                    >
+                      Quick Summary
+                    </button>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+
+            {filteredTopics.length === 0 && !isLoading && (
+              <div className="text-center py-12">
+                <p className="text-white/50 text-lg">
+                  No topics found for this category.
+                </p>
+                <button
+                  onClick={() => setActiveCategory("All")}
+                  className="mt-3 text-sm text-[#00d4ff] hover:text-[#00d4ff]/80 font-medium"
+                >
+                  Show all topics
+                </button>
+              </div>
+            )}
+
+            {/* Last updated timestamp */}
+            {generatedAt && (
+              <div className="mt-8 text-center text-xs text-white/40">
+                Last updated: {formatTimestamp(generatedAt)}
+              </div>
+            )}
+          </>
+        )}
+      </div>
+
+      {/* Summary Modal: centered glass card with backdrop blur */}
+      {summaryModal.open && (
+        <div
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+          onClick={() =>
+            setSummaryModal({ open: false, topic: null, summary: null, loading: false })
+          }
+        >
+          <motion.div
+            initial={{ opacity: 0, scale: 0.96 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.2 }}
+            className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl max-w-md w-full p-6 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal header */}
+            <div className="flex items-start justify-between mb-4">
+              <div>
+                <h3 className="text-lg font-bold text-white">
+                  {summaryModal.topic?.title}
+                </h3>
+                {summaryModal.topic && (
+                  <span
+                    className={`inline-block mt-1 text-xs font-medium px-2 py-0.5 rounded-full border ${getCategoryColor(summaryModal.topic.category)}`}
+                  >
+                    {summaryModal.topic.category}
+                  </span>
+                )}
+              </div>
+              <button
+                onClick={() =>
+                  setSummaryModal({
+                    open: false,
+                    topic: null,
+                    summary: null,
+                    loading: false,
+                  })
+                }
+                className="text-white/60 hover:text-white text-xl leading-none"
+              >
+                ×
+              </button>
+            </div>
+
+            {/* Summary content */}
+            {summaryModal.loading ? (
+              <div className="space-y-3 py-4">
+                <div className="h-4 bg-white/10 rounded animate-pulse w-full" />
+                <div className="h-4 bg-white/10 rounded animate-pulse w-5/6" />
+                <div className="h-4 bg-white/10 rounded animate-pulse w-full" />
+                <div className="h-4 bg-white/10 rounded animate-pulse w-4/6" />
+                <div className="h-4 bg-white/10 rounded animate-pulse w-full" />
+                <div className="h-4 bg-white/10 rounded animate-pulse w-3/6" />
+              </div>
+            ) : summaryModal.summary ? (
+              <div className="space-y-4">
+                <div className="bg-[#00d4ff]/10 border border-[#00d4ff]/30 rounded-xl p-3">
+                  <p className="text-xs font-semibold text-[#00d4ff] uppercase tracking-wide mb-1">
+                    What it is
+                  </p>
+                  <p className="text-sm text-white/80">
+                    {summaryModal.summary.what_it_is}
+                  </p>
+                </div>
+                <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3">
+                  <p className="text-xs font-semibold text-amber-300 uppercase tracking-wide mb-1">
+                    Why it matters
+                  </p>
+                  <p className="text-sm text-white/80">
+                    {summaryModal.summary.why_it_matters}
+                  </p>
+                </div>
+                <div className="bg-[#10b981]/10 border border-[#10b981]/30 rounded-xl p-3">
+                  <p className="text-xs font-semibold text-[#10b981] uppercase tracking-wide mb-1">
+                    How to get started
+                  </p>
+                  <p className="text-sm text-white/80">
+                    {summaryModal.summary.how_to_start}
+                  </p>
+                </div>
+              </div>
+            ) : null}
+
+            {/* Learn More button */}
+            {!summaryModal.loading && summaryModal.topic && (
+              <button
+                onClick={() => {
+                  handleLearnThis(summaryModal.topic!);
+                  setSummaryModal({
+                    open: false,
+                    topic: null,
+                    summary: null,
+                    loading: false,
+                  });
+                }}
+                className="w-full mt-5 text-sm font-medium bg-gradient-to-r from-[#8b5cf6] to-[#00d4ff] hover:shadow-[0_0_20px_rgba(0,212,255,0.3)] text-white px-4 py-2.5 rounded-xl transition-all border border-white/10"
+              >
+                Learn More →
+              </button>
+            )}
+          </motion.div>
+        </div>
+      )}
+    </main>
+  );
+}
