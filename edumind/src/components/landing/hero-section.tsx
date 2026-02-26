@@ -93,6 +93,84 @@ export function HeroSection() {
           </span>
         </div>
       </FadeUp>
+
+      {/* Product Preview */}
+      <FadeUp delay={0.55}>
+        <div
+          className="max-w-2xl mx-auto mt-12 rounded-xl overflow-hidden"
+          style={{
+            border: '1px solid var(--border)',
+            boxShadow: '0 20px 60px rgba(0,0,0,0.08)',
+            background: 'white',
+          }}
+        >
+          {/* Browser chrome */}
+          <div
+            className="flex items-center gap-2 px-4 py-2.5"
+            style={{ background: 'var(--bg-muted)', borderBottom: '1px solid var(--border)' }}
+          >
+            <div className="flex items-center gap-1.5">
+              <div className="w-3 h-3 rounded-full bg-red-300" />
+              <div className="w-3 h-3 rounded-full bg-yellow-300" />
+              <div className="w-3 h-3 rounded-full bg-green-300" />
+            </div>
+            <div
+              className="flex-1 rounded px-3 py-1 text-xs font-sans ml-2"
+              style={{ background: 'white', color: 'var(--text-tertiary)' }}
+            >
+              edumind-omega.vercel.app/chat
+            </div>
+          </div>
+          {/* Chat area */}
+          <div className="p-6 space-y-4">
+            {/* User message */}
+            <div className="flex justify-end">
+              <div
+                className="rounded-lg px-4 py-2.5 max-w-[80%] text-left"
+                style={{ background: 'var(--accent-light, rgba(74,124,89,0.08))' }}
+              >
+                <p className="font-sans text-[14px]" style={{ color: 'var(--text-primary)' }}>
+                  Explain quantum entanglement like I&apos;m 17
+                </p>
+              </div>
+            </div>
+            {/* AI message */}
+            <div className="flex justify-start">
+              <div
+                className="rounded-lg px-4 py-3 max-w-[85%]"
+                style={{ borderLeft: '3px solid var(--accent)', background: 'var(--bg-muted)' }}
+              >
+                <p
+                  className="font-serif text-[14px]"
+                  style={{ color: 'var(--text-primary)', lineHeight: 1.7 }}
+                >
+                  Imagine you have two coins that are magically linked. When you flip one and it
+                  lands heads, the other instantly lands tails &mdash; no matter how far apart they
+                  are. Even if one coin is in Toronto and the other is on Mars...
+                </p>
+              </div>
+            </div>
+            {/* Typing indicator */}
+            <div className="flex justify-start">
+              <div className="flex items-center gap-1 px-4 py-2">
+                {[0, 1, 2].map((i) => (
+                  <motion.div
+                    key={i}
+                    className="w-2 h-2 rounded-full"
+                    style={{ background: 'var(--accent)' }}
+                    animate={{ opacity: [0.3, 1, 0.3] }}
+                    transition={{
+                      duration: 1.2,
+                      repeat: Infinity,
+                      delay: i * 0.2,
+                    }}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </FadeUp>
     </section>
   )
 }

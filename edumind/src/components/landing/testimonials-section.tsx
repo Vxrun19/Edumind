@@ -5,21 +5,21 @@ import { StaggerContainer, StaggerItem } from '@/components/animations'
 const testimonials = [
   {
     quote:
-      'EduMind explained integration in a way no teacher ever could. I finally get calculus.',
-    author: 'Priya Mehta',
-    role: 'Medical Student',
+      'I failed calculus twice. With EduMind I passed with a B+ in one semester. It actually explains WHY, not just how.',
+    author: 'Priya M.',
+    role: 'Pre-med student, University of Toronto',
   },
   {
     quote:
-      "I've used every app. Nothing adapts to me the way EduMind does. It knows when I'm stuck.",
-    author: 'James Lin',
-    role: 'Law Student',
+      "I studied for the bar exam using EduMind for 3 months. It found gaps in my knowledge I didn't know existed. Passed first attempt.",
+    author: 'James L.',
+    role: 'Law graduate, New York',
   },
   {
     quote:
-      "Found gaps I didn't know I had. 22-point exam improvement in four weeks.",
-    author: 'Anika Rao',
-    role: 'Engineering, Toronto',
+      'As a non-native English speaker, having an AI that adjusts to my level and never makes me feel stupid changed everything.',
+    author: 'Anika R.',
+    role: 'Engineering student, Berlin',
   },
 ]
 
@@ -43,6 +43,14 @@ export function TestimonialsSection() {
               <div
                 className="notebook-panel p-7 h-full transition-all duration-200 hover:-translate-y-[2px] hover:shadow-md relative"
               >
+                {/* Stars */}
+                <div className="flex gap-0.5 mb-2" aria-label="5 out of 5 stars">
+                  {[...Array(5)].map((_, i) => (
+                    <span key={i} className="text-[16px]" style={{ color: 'var(--accent)' }}>
+                      {'\u2605'}
+                    </span>
+                  ))}
+                </div>
                 {/* Opening quote */}
                 <span
                   className="font-serif text-[60px] absolute top-2 left-4 leading-none select-none"
@@ -52,7 +60,7 @@ export function TestimonialsSection() {
                   {'\u201C'}
                 </span>
                 <p
-                  className="font-serif text-[16px] italic mt-6 relative z-10"
+                  className="font-serif text-[16px] italic mt-3 relative z-10"
                   style={{ color: 'var(--text-primary)', lineHeight: 1.7 }}
                 >
                   {t.quote}

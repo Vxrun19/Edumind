@@ -16,14 +16,18 @@ export function Footer() {
             </p>
           </div>
           <nav className="flex items-center gap-6">
-            {['About', 'Pricing', 'Privacy', 'Terms'].map((item) => (
+            {[
+              { label: 'Pricing', href: '/pricing' },
+              { label: 'Privacy', href: '/privacy' },
+              { label: 'Terms', href: '/terms' },
+            ].map((item) => (
               <Link
-                key={item}
-                href="#"
+                key={item.label}
+                href={item.href}
                 className="font-sans text-[14px] transition-colors duration-200"
                 style={{ color: 'var(--text-secondary)' }}
               >
-                {item}
+                {item.label}
               </Link>
             ))}
           </nav>
