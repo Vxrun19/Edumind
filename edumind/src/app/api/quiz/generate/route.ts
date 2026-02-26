@@ -1,6 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { auth } from "@clerk/nextjs/server";
 import { supabase } from "@/lib/supabase";
+import { rateLimit } from "@/lib/ratelimit";
 import { NextRequest, NextResponse } from "next/server";
 
 const client = new Anthropic();
@@ -74,6 +75,15 @@ export async function POST(request: NextRequest) {
   const { userId } = await auth();
   if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  // Rate limiting: 10 requests per minute per user
+  const { success: rateLimitOk } = rateLimit(userId, 10, 60_000);
+  if (!rateLimitOk) {
+    return NextResponse.json(
+      { error: "Too many requests. Please slow down." },
+      { status: 429 }
+    );
   }
 
   const { conversationId, subject, messages, difficulty } =

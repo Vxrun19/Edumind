@@ -1,4 +1,5 @@
 import Stripe from "stripe";
+import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
 function getStripe() {
@@ -8,6 +9,11 @@ function getStripe() {
 }
 
 export async function GET(req: Request) {
+  const { userId } = await auth();
+  if (!userId) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const stripe = getStripe();
 
   const { searchParams } = new URL(req.url);

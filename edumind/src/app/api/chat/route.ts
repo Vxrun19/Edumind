@@ -1,6 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { auth } from "@clerk/nextjs/server";
 import { supabase } from "@/lib/supabase";
+import { rateLimit } from "@/lib/ratelimit";
 import type {
   StudentProfile,
   LearningMemory,
@@ -248,62 +249,95 @@ const client = new Anthropic();
 
 export async function POST(request: NextRequest) {
   try {
+    const { userId } = await auth();
+    if (!userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Rate limiting: 30 requests per minute per user
+    const { success: rateLimitOk } = rateLimit(userId, 30, 60_000);
+    if (!rateLimitOk) {
+      return NextResponse.json(
+        { error: "Too many requests. Please slow down." },
+        { status: 429 }
+      );
+    }
+
     const { messages, subject, messageCount, trendingTopic } = await request.json();
 
+    // Input validation
     if (!messages || !Array.isArray(messages)) {
       return NextResponse.json(
-        { error: "messages array is required" },
+        { error: "Invalid request" },
+        { status: 400 }
+      );
+    }
+
+    if (messages.length > 100) {
+      return NextResponse.json(
+        { error: "Conversation too long" },
+        { status: 400 }
+      );
+    }
+
+    const lastMessage = messages[messages.length - 1];
+    if (!lastMessage?.content || typeof lastMessage.content !== "string") {
+      return NextResponse.json(
+        { error: "Invalid message format" },
+        { status: 400 }
+      );
+    }
+
+    if (lastMessage.content.length > 4000) {
+      return NextResponse.json(
+        { error: "Message too long (max 4000 chars)" },
         { status: 400 }
       );
     }
 
     // Try to load the student's profile + memories for a personalized prompt
     let systemPrompt = FALLBACK_PROMPT;
-    const { userId } = await auth();
 
     // ─── Free plan message limit check ────────────────────
-    if (userId) {
-      const { data: sub } = await supabase
-        .from("subscriptions")
-        .select("plan")
-        .eq("user_id", userId)
-        .single();
+    const { data: sub } = await supabase
+      .from("subscriptions")
+      .select("plan")
+      .eq("user_id", userId)
+      .single();
 
-      const plan = sub?.plan || "free";
+    const plan = sub?.plan || "free";
 
-      if (plan === "free") {
-        const today = new Date().toISOString().split("T")[0];
+    if (plan === "free") {
+      const today = new Date().toISOString().split("T")[0];
 
-        const { data: userConvos } = await supabase
-          .from("conversations")
-          .select("id")
-          .eq("user_id", userId);
+      const { data: userConvos } = await supabase
+        .from("conversations")
+        .select("id")
+        .eq("user_id", userId);
 
-        if (userConvos && userConvos.length > 0) {
-          const convoIds = userConvos.map((c: { id: string }) => c.id);
-          const { count: msgCount } = await supabase
-            .from("messages")
-            .select("id", { count: "exact", head: true })
-            .in("conversation_id", convoIds)
-            .eq("role", "user")
-            .gte("created_at", `${today}T00:00:00.000Z`);
+      if (userConvos && userConvos.length > 0) {
+        const convoIds = userConvos.map((c: { id: string }) => c.id);
+        const { count: msgCount } = await supabase
+          .from("messages")
+          .select("id", { count: "exact", head: true })
+          .in("conversation_id", convoIds)
+          .eq("role", "user")
+          .gte("created_at", `${today}T00:00:00.000Z`);
 
-          if (msgCount !== null && msgCount >= 20) {
-            return NextResponse.json(
-              {
-                error: "You've reached your daily message limit (20 messages). Upgrade to Pro for unlimited learning!",
-                upgradeRequired: true,
-                usage: { used: msgCount, limit: 20 },
-              },
-              { status: 403 }
-            );
-          }
+        if (msgCount !== null && msgCount >= 20) {
+          return NextResponse.json(
+            {
+              error: "You've reached your daily message limit (20 messages). Upgrade to Pro for unlimited learning!",
+              upgradeRequired: true,
+              usage: { used: msgCount, limit: 20 },
+            },
+            { status: 403 }
+          );
         }
       }
     }
 
-    if (userId) {
-      const [profileRes, memoriesRes, insightRes, streakRes, assessmentRes] =
+    const [profileRes, memoriesRes, insightRes, streakRes, assessmentRes] =
         await Promise.all([
           supabase
             .from("student_profiles")
@@ -354,7 +388,6 @@ export async function POST(request: NextRequest) {
           daysSinceLastVisit
         );
       }
-    }
 
     // Append trending topic context if present
     if (trendingTopic) {
