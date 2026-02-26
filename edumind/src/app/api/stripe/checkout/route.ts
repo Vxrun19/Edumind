@@ -1,9 +1,17 @@
 import { auth, currentUser } from "@clerk/nextjs/server";
-import { stripe } from "@/lib/stripe";
+import Stripe from "stripe";
 import { supabase } from "@/lib/supabase";
 import { NextRequest, NextResponse } from "next/server";
 
+function getStripe() {
+  const key = process.env.STRIPE_SECRET_KEY;
+  if (!key) throw new Error("STRIPE_SECRET_KEY not set");
+  return new Stripe(key);
+}
+
 export async function GET(request: NextRequest) {
+  const stripe = getStripe();
+
   const sessionId = request.nextUrl.searchParams.get("session_id");
   if (!sessionId) {
     return NextResponse.json(
@@ -21,6 +29,8 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const stripe = getStripe();
+
   const { userId } = await auth();
   if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

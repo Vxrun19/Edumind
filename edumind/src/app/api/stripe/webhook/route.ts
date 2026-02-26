@@ -1,9 +1,16 @@
-import { stripe } from "@/lib/stripe";
+import Stripe from "stripe";
 import { supabase } from "@/lib/supabase";
 import { NextRequest, NextResponse } from "next/server";
-import Stripe from "stripe";
+
+function getStripe() {
+  const key = process.env.STRIPE_SECRET_KEY;
+  if (!key) throw new Error("STRIPE_SECRET_KEY not set");
+  return new Stripe(key);
+}
 
 export async function POST(request: NextRequest) {
+  const stripe = getStripe();
+
   const body = await request.text();
   const signature = request.headers.get("stripe-signature");
 

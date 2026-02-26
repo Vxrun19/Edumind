@@ -1,9 +1,17 @@
 import { auth, currentUser } from "@clerk/nextjs/server";
-import { stripe } from "@/lib/stripe";
+import Stripe from "stripe";
 import { supabase } from "@/lib/supabase";
 import { NextResponse } from "next/server";
 
+function getStripe() {
+  const key = process.env.STRIPE_SECRET_KEY;
+  if (!key) throw new Error("STRIPE_SECRET_KEY not set");
+  return new Stripe(key);
+}
+
 export async function POST(req: Request) {
+  const stripe = getStripe();
+
   try {
     const { userId } = await auth();
     if (!userId) {
