@@ -4,6 +4,7 @@ import { useState, type ReactNode } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useUser } from '@clerk/nextjs'
+import { useSubscription } from '@/hooks/use-subscription'
 import {
   LayoutDashboard,
   MessageSquare,
@@ -56,6 +57,7 @@ interface AcademicLayoutProps {
 export function AcademicLayout({ children, rightPanel, pageNumber }: AcademicLayoutProps) {
   const pathname = usePathname()
   const { user } = useUser()
+  const { isPro } = useSubscription()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [mobileRightOpen, setMobileRightOpen] = useState(false)
   const currentPage = navItems.find((n) => pathname.startsWith(n.href))
@@ -188,15 +190,17 @@ export function AcademicLayout({ children, rightPanel, pageNumber }: AcademicLay
               {user?.firstName ?? 'Scholar'}
             </p>
             <p className="font-sans text-[12px]" style={{ color: 'var(--text-tertiary)' }}>
-              Free Plan
+              {isPro ? 'Pro Plan' : 'Free Plan'}
             </p>
-            <Link
-              href="/pricing"
-              className="font-sans text-[12px] mt-[2px] inline-block transition-all duration-200"
-              style={{ color: 'var(--accent)' }}
-            >
-              {'Upgrade \u2192'}
-            </Link>
+            {!isPro && (
+              <Link
+                href="/pricing"
+                className="font-sans text-[12px] mt-[2px] inline-block transition-all duration-200"
+                style={{ color: 'var(--accent)' }}
+              >
+                {'Upgrade \u2192'}
+              </Link>
+            )}
           </div>
         </aside>
 

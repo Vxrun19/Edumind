@@ -17,6 +17,7 @@ import {
   Palette,
 } from "lucide-react";
 import { CountUp, StaggerContainer, StaggerItem } from "@/components/animations";
+import DashboardUpgradeCard from "@/components/DashboardUpgradeCard";
 import { COURSES } from "@/lib/courses";
 import { SUBJECTS } from "@/lib/subjects";
 import type {
@@ -325,6 +326,11 @@ export function DashboardContent({
             ? `You have ${recentConversations.length} recent conversation${recentConversations.length !== 1 ? "s" : ""}.`
             : "Start a conversation to begin learning."}
         </p>
+      </div>
+
+      {/* Upgrade Card */}
+      <div className="mt-6">
+        <DashboardUpgradeCard />
       </div>
 
       {/* Today's Focus */}

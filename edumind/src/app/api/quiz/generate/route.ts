@@ -79,6 +79,35 @@ export async function POST(request: NextRequest) {
   const { conversationId, subject, messages, difficulty } =
     await request.json();
 
+  // ─── Free plan quiz limit check ─────────────────────
+  const { data: sub } = await supabase
+    .from("subscriptions")
+    .select("plan")
+    .eq("user_id", userId)
+    .single();
+
+  const userPlan = sub?.plan || "free";
+
+  if (userPlan === "free") {
+    const today = new Date().toISOString().split("T")[0];
+    const { count: quizCount } = await supabase
+      .from("quizzes")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", userId)
+      .gte("created_at", `${today}T00:00:00.000Z`);
+
+    if (quizCount !== null && quizCount >= 3) {
+      return NextResponse.json(
+        {
+          error: "You've reached your daily quiz limit (3 quizzes). Upgrade to Pro for unlimited quizzes!",
+          upgradeRequired: true,
+          usage: { used: quizCount, limit: 3 },
+        },
+        { status: 403 }
+      );
+    }
+  }
+
   const subjectName = subject || "General";
   const quizDifficulty = difficulty || "medium";
 

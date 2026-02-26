@@ -16,6 +16,9 @@ import { SUBJECTS } from "@/lib/subjects";
 import { useVoice } from "@/hooks/use-voice";
 import VoiceIndicator from "@/components/VoiceIndicator";
 import VoiceSettings from "@/components/VoiceSettings";
+import UpgradeModal from "@/components/UpgradeModal";
+import UpgradeBanner from "@/components/UpgradeBanner";
+import { useSubscription } from "@/hooks/use-subscription";
 
 interface ChatMessage {
   role: "user" | "assistant";
@@ -225,6 +228,10 @@ function ChatContent() {
   const [quizGenError, setQuizGenError] = useState(false);
   const [focusMode, setFocusMode] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
+  const [upgradeReason, setUpgradeReason] = useState<"messages" | "quizzes">("messages");
+  const [messagesUsedToday, setMessagesUsedToday] = useState(0);
+  const { isPro } = useSubscription();
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -339,6 +346,16 @@ function ChatContent() {
     };
   }, []);
 
+  // Fetch today's usage for the banner
+  useEffect(() => {
+    if (!isPro) {
+      fetch("/api/subscription/usage")
+        .then((r) => r.json())
+        .then((d) => setMessagesUsedToday(d.messagesUsed ?? 0))
+        .catch(() => {});
+    }
+  }, [isPro]);
+
   // Exit focus mode on ESC
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -448,6 +465,14 @@ function ChatContent() {
         const data = await res.json();
 
         if (!res.ok) {
+          if (data.upgradeRequired) {
+            setUpgradeReason("messages");
+            setUpgradeModalOpen(true);
+            // Remove the user message we just added since it wasn't processed
+            setMessages(allMessages);
+            setIsLoading(false);
+            return;
+          }
           throw new Error(data.error || "Something went wrong");
         }
 
@@ -462,6 +487,9 @@ function ChatContent() {
         if (convoId) {
           await saveMessage(convoId, "assistant", assistantContent);
         }
+
+        // Update messages used counter
+        setMessagesUsedToday((prev) => prev + 1);
 
         // ─── Background analysis — fire and forget ─────────
         analyzeConversation(finalMessages, subject, convoId);
@@ -595,7 +623,14 @@ function ChatContent() {
         }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
+      if (!res.ok) {
+        if (data.upgradeRequired) {
+          setUpgradeReason("quizzes");
+          setUpgradeModalOpen(true);
+          return;
+        }
+        throw new Error(data.error);
+      }
       if (data.quiz?.id) {
         router.push(`/quiz/${data.quiz.id}`);
       }
@@ -977,6 +1012,11 @@ function ChatContent() {
             </button>
           </div>
         </div>
+
+        {/* ── UPGRADE BANNER (free plan only) ── */}
+        {!isPro && messagesUsedToday > 0 && (
+          <UpgradeBanner messagesUsed={messagesUsedToday} messagesLimit={20} />
+        )}
 
         {/* ── CONTENT: messages + canvas split ── */}
         <div className="flex flex-1 min-h-0 overflow-hidden">
@@ -1415,6 +1455,13 @@ function ChatContent() {
       {focusMode && (
         <div className="pointer-events-none fixed inset-0 z-40 bg-[rgba(0,0,0,0.15)]" />
       )}
+
+      {/* Upgrade Modal */}
+      <UpgradeModal
+        isOpen={upgradeModalOpen}
+        onClose={() => setUpgradeModalOpen(false)}
+        reason={upgradeReason}
+      />
 
       {/* Neural wave keyframes */}
       <style jsx global>{`

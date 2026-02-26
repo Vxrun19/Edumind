@@ -5,6 +5,8 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import { COURSES, LESSONS } from "@/lib/courses";
 import type { CourseProgress } from "@/lib/supabase";
+import { useSubscription } from "@/hooks/use-subscription";
+import UpgradeModal from "@/components/UpgradeModal";
 
 function getDifficultyColor(d: string) {
   if (d === "Beginner") return "bg-emerald-50 text-emerald-700 border border-emerald-200";
@@ -19,6 +21,8 @@ export default function CourseDetailPage() {
   const lessons = LESSONS[courseId] ?? [];
   const [progress, setProgress] = useState<CourseProgress | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const { isPro } = useSubscription();
+  const [showUpgrade, setShowUpgrade] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -106,6 +110,26 @@ export default function CourseDetailPage() {
               </div>
             </div>
 
+            {/* Pro Course Gate */}
+            {!course.isFree && !isPro && (
+              <div className="notebook-panel border-2 border-[var(--accent)] rounded-2xl p-6 mb-6 text-center">
+                <div className="text-4xl mb-3">🔒</div>
+                <h3 className="text-lg font-bold text-[var(--text-primary)] mb-2 font-serif">
+                  This is a Pro course
+                </h3>
+                <p className="text-sm text-[var(--text-tertiary)] mb-4 max-w-md mx-auto">
+                  Upgrade to Pro to unlock this course and all other premium content, unlimited messages, and more.
+                </p>
+                <Link
+                  href="/pricing"
+                  className="inline-block px-6 py-3 rounded-xl text-sm font-semibold text-white transition-all hover:opacity-90"
+                  style={{ background: "var(--accent)" }}
+                >
+                  Upgrade to Pro — $9.99/mo
+                </Link>
+              </div>
+            )}
+
             {/* Lesson List */}
             <div className="notebook-panel border border-[var(--border)] rounded-2xl p-6">
               <h2 className="text-lg font-semibold text-[var(--text-primary)] mb-4">
@@ -121,7 +145,8 @@ export default function CourseDetailPage() {
                   {lessons.map((lesson, i) => {
                     const isCompleted = completedLessons.includes(lesson.id);
                     const isCurrent = currentLesson?.id === lesson.id;
-                    const isLocked = !course.isFree && !isCompleted && i > 0 && !completedLessons.includes(lessons[i - 1]?.id);
+                    const isProLocked = !course.isFree && !isPro;
+                    const isLocked = isProLocked || (!course.isFree && !isCompleted && i > 0 && !completedLessons.includes(lessons[i - 1]?.id));
 
                     return (
                       <Link
@@ -213,14 +238,21 @@ export default function CourseDetailPage() {
                 </div>
 
                 {/* Continue Button */}
-                {currentLesson && !isComplete && (
+                {!course.isFree && !isPro ? (
+                  <Link
+                    href="/pricing"
+                    className="block w-full text-center bg-[var(--accent)] hover:opacity-90 text-[var(--bg-base)] font-semibold py-3 rounded-xl transition-colors text-sm"
+                  >
+                    Upgrade to Unlock
+                  </Link>
+                ) : currentLesson && !isComplete ? (
                   <Link
                     href={`/courses/${courseId}/${currentLesson.id}`}
                     className="block w-full text-center bg-[var(--accent)] hover:opacity-90 text-[var(--bg-base)] font-semibold py-3 rounded-xl transition-colors text-sm"
                   >
                     {progress ? "Continue Learning" : "Start Course"}
                   </Link>
-                )}
+                ) : null}
                 {isComplete && (
                   <div className="text-center bg-[#10b981]/10 text-[#10b981] font-semibold py-3 rounded-xl text-sm">
                     {"\uD83C\uDF89"} Course Complete!

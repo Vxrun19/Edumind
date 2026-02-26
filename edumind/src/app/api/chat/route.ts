@@ -261,6 +261,47 @@ export async function POST(request: NextRequest) {
     let systemPrompt = FALLBACK_PROMPT;
     const { userId } = await auth();
 
+    // ─── Free plan message limit check ────────────────────
+    if (userId) {
+      const { data: sub } = await supabase
+        .from("subscriptions")
+        .select("plan")
+        .eq("user_id", userId)
+        .single();
+
+      const plan = sub?.plan || "free";
+
+      if (plan === "free") {
+        const today = new Date().toISOString().split("T")[0];
+
+        const { data: userConvos } = await supabase
+          .from("conversations")
+          .select("id")
+          .eq("user_id", userId);
+
+        if (userConvos && userConvos.length > 0) {
+          const convoIds = userConvos.map((c: { id: string }) => c.id);
+          const { count: msgCount } = await supabase
+            .from("messages")
+            .select("id", { count: "exact", head: true })
+            .in("conversation_id", convoIds)
+            .eq("role", "user")
+            .gte("created_at", `${today}T00:00:00.000Z`);
+
+          if (msgCount !== null && msgCount >= 20) {
+            return NextResponse.json(
+              {
+                error: "You've reached your daily message limit (20 messages). Upgrade to Pro for unlimited learning!",
+                upgradeRequired: true,
+                usage: { used: msgCount, limit: 20 },
+              },
+              { status: 403 }
+            );
+          }
+        }
+      }
+    }
+
     if (userId) {
       const [profileRes, memoriesRes, insightRes, streakRes, assessmentRes] =
         await Promise.all([
