@@ -6,6 +6,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { SUBJECTS } from "@/lib/subjects";
 import AcademicLayout from "@/components/AcademicLayout";
+import posthog from "posthog-js";
 
 // ─── Types ──────────────────────────────────────────────
 interface GeneratedQuestion {
@@ -204,6 +205,12 @@ function QuizContent() {
       setShowFeedback(false);
       setQuizStartTime(Date.now());
       setPhase("quiz");
+
+      posthog.capture("quiz_generated", {
+        subject: selectedSubject,
+        difficulty,
+        num_questions: numQuestions,
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to generate quiz");
       setPhase("setup");
@@ -250,6 +257,14 @@ function QuizContent() {
     const timeTaken = Math.round((Date.now() - quizStartTime) / 1000);
     const score = answeredQuestions.filter((a) => a.is_correct).length;
     const percentage = Math.round((score / questions.length) * 100);
+
+    posthog.capture("quiz_completed", {
+      subject: selectedSubject,
+      score,
+      total: questions.length,
+      percentage,
+      time_taken: timeTaken,
+    });
 
     // Detect weak topics from wrong answers
     const wrongQs = answeredQuestions.filter((a) => !a.is_correct);

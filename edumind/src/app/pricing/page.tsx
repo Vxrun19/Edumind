@@ -7,6 +7,7 @@ import { CheckCircle, XCircle } from "lucide-react";
 import { useSubscription } from "@/hooks/use-subscription";
 import { PLANS } from "@/lib/plans";
 import AcademicLayout from "@/components/AcademicLayout";
+import posthog from "posthog-js";
 
 type Interval = "monthly" | "yearly";
 
@@ -27,6 +28,9 @@ export default function PricingPage() {
       router.push("/sign-up");
       return;
     }
+
+    posthog.capture("upgrade_clicked", { interval });
+
     const priceId =
       interval === "monthly"
         ? process.env.NEXT_PUBLIC_STRIPE_PRICE_MONTHLY

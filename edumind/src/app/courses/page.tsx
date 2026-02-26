@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import { COURSES, LESSONS } from "@/lib/courses";
 import type { CourseProgress } from "@/lib/supabase";
 import AcademicLayout from "@/components/AcademicLayout";
+import posthog from "posthog-js";
 
 type FilterType = "All" | "Free" | "Premium" | "Pro" | string;
 
@@ -93,7 +94,13 @@ export default function CoursesPage() {
                   <button
                     key={course.id}
                     type="button"
-                    onClick={() => setActiveCourseId(course.id)}
+                    onClick={() => {
+                      setActiveCourseId(course.id);
+                      posthog.capture("course_opened", {
+                        course_id: course.id,
+                        course_title: course.title,
+                      });
+                    }}
                     className={`w-full text-left px-3 py-2 rounded-lg text-xs flex items-center justify-between gap-2 border-l-4 transition-colors ${
                       isActive
                         ? "border-l-[var(--accent)] bg-[var(--bg-surface)] text-[var(--text-primary)]"

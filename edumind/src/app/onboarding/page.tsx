@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useUser } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
+import posthog from "posthog-js";
 
 const AGE_GROUPS = ["Under 10", "10-13", "14-17", "18-25", "25+"];
 
@@ -84,6 +85,14 @@ export default function OnboardingPage() {
           level,
         }),
       });
+
+      posthog.capture("onboarding_completed", {
+        age_group: ageGroup,
+        goals: selectedGoals,
+        learning_style: learningStyle,
+        level,
+      });
+
       router.push("/dashboard");
     } catch {
       setIsSaving(false);

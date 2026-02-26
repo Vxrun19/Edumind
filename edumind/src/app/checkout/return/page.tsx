@@ -4,6 +4,7 @@ import { useEffect, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { CheckCircle } from "lucide-react";
+import posthog from "posthog-js";
 
 function ReturnContent() {
   const searchParams = useSearchParams();
@@ -24,6 +25,7 @@ function ReturnContent() {
       .then((data) => {
         if (data.status === "complete") {
           setStatus("success");
+          posthog.capture("upgrade_completed");
         } else {
           setStatus("error");
         }

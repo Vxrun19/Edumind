@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Lora, Inter, Fira_Code } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
 import NavbarWrapper from "@/components/NavbarWrapper";
+import PostHogIdentify from "@/components/PostHogIdentify";
 import "./globals.css";
 
 const lora = Lora({
@@ -99,6 +100,7 @@ export default function RootLayout({
     <ClerkProvider>
       <html lang="en" className={`${lora.variable} ${inter.variable} ${firaCode.variable}`}>
         <body className="font-sans antialiased">
+          <PostHogIdentify />
           <NavbarWrapper />
           {children}
         </body>

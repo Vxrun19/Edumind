@@ -19,6 +19,7 @@ import VoiceSettings from "@/components/VoiceSettings";
 import UpgradeModal from "@/components/UpgradeModal";
 import UpgradeBanner from "@/components/UpgradeBanner";
 import { useSubscription } from "@/hooks/use-subscription";
+import posthog from "posthog-js";
 
 interface ChatMessage {
   role: "user" | "assistant";
@@ -491,6 +492,9 @@ function ChatContent() {
         // Update messages used counter
         setMessagesUsedToday((prev) => prev + 1);
 
+        // Analytics
+        posthog.capture("message_sent", { subject: subject ?? "free_chat" });
+
         // ─── Background analysis — fire and forget ─────────
         analyzeConversation(finalMessages, subject, convoId);
 
@@ -922,7 +926,12 @@ function ChatContent() {
                 )}
 
                 <button
-                  onClick={voice.toggleVoiceOutput}
+                  onClick={() => {
+                    voice.toggleVoiceOutput();
+                    if (!voice.voiceOutputEnabled) {
+                      posthog.capture("voice_mode_enabled");
+                    }
+                  }}
                   className="p-1.5 rounded-lg transition-colors duration-150"
                   style={{
                     background: voice.voiceOutputEnabled ? "var(--accent-light)" : "transparent",
