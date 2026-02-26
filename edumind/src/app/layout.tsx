@@ -33,6 +33,9 @@ export const metadata: Metadata = {
   },
   description:
     "EduMind is your personal AI tutor. Learn any subject, master any skill, with adaptive AI guidance that grows with you.",
+  verification: {
+    google: "8WzM8VLtICGD24BPm0Xu2k6vtCvXE9hObBEr9JiQL1o",
+  },
   keywords: [
     "AI tutor",
     "personal tutor",
