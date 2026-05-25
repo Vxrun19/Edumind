@@ -10,3 +10,6 @@ build/
 *.log
 nul
 "@ | Out-File -FilePath .gitignore -Encoding utf8 -NoNewline
+stripe.exe
+*.zip
+build-edu-mind-ai/
