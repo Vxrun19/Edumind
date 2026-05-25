@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { auth } from "@clerk/nextjs/server";
-import { supabase } from "@/lib/supabase";
+import { supabaseAdmin as supabase } from "@/lib/supabaseAdmin";
 import type { Conversation, UserStreak, StudentProfile, Quiz, TrendingTopic, LearningAssessment, CourseProgress } from "@/lib/supabase";
 import { DashboardContent, DashboardRightPanelWrapper } from "@/components/dashboard/DashboardContent";
 import AcademicLayout from "@/components/AcademicLayout";

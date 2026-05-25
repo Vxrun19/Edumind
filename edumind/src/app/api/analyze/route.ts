@@ -1,6 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { auth } from "@clerk/nextjs/server";
-import { supabase } from "@/lib/supabase";
+import { supabaseAdmin as supabase } from "@/lib/supabaseAdmin";
 import { NextRequest, NextResponse } from "next/server";
 
 const client = new Anthropic();
@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
   try {
     // ─── Silent analysis call to Anthropic ───────────────
     const analysisResponse = await client.messages.create({
-      model: "claude-sonnet-4-20250514",
+      model: "claude-haiku-4-5-20251001",
       max_tokens: 1024,
       system: `You are a learning analytics engine. You analyze student-tutor conversations to extract actionable learning insights. Be specific and concise. Only include meaningful insights, not obvious ones.
 

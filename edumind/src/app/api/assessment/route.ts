@@ -1,5 +1,5 @@
 import { auth } from "@clerk/nextjs/server";
-import { supabase } from "@/lib/supabase";
+import { supabaseAdmin as supabase } from "@/lib/supabaseAdmin";
 import type { LearningAssessment } from "@/lib/supabase";
 import { NextRequest, NextResponse } from "next/server";
 

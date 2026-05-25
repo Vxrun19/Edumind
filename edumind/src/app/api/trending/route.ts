@@ -1,6 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { auth } from "@clerk/nextjs/server";
-import { supabase } from "@/lib/supabase";
+import { supabaseAdmin as supabase } from "@/lib/supabaseAdmin";
 import type { TrendingTopic } from "@/lib/supabase";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -63,7 +63,7 @@ async function canRefresh(): Promise<boolean> {
 
 async function generateTopics(): Promise<TrendingTopic[]> {
   const response = await client.messages.create({
-    model: "claude-sonnet-4-20250514",
+    model: "claude-haiku-4-5-20251001",
     max_tokens: 4096,
     messages: [
       {

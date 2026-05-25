@@ -1,6 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { auth } from "@clerk/nextjs/server";
-import { supabase } from "@/lib/supabase";
+import { supabaseAdmin as supabase } from "@/lib/supabaseAdmin";
 import { NextRequest, NextResponse } from "next/server";
 
 const client = new Anthropic();
@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const response = await client.messages.create({
-      model: "claude-sonnet-4-20250514",
+      model: "claude-haiku-4-5-20251001",
       max_tokens: 512,
       system: `You suggest the next 3 learning topics for a student based on what they just studied and what they're ready for. Be specific and actionable. Return ONLY a valid JSON array of 3 strings (no markdown, no backticks). Each string should be a specific topic suggestion like "Introduction to Quadratic Equations" or "Python List Comprehensions". Keep each under 50 characters.`,
       messages: [

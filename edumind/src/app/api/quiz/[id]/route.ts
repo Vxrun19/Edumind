@@ -1,6 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { auth } from "@clerk/nextjs/server";
-import { supabase } from "@/lib/supabase";
+import { supabaseAdmin as supabase } from "@/lib/supabaseAdmin";
 import { NextRequest, NextResponse } from "next/server";
 
 const client = new Anthropic();
@@ -138,7 +138,7 @@ export async function POST(
       if (userAnswerText.length > 0) {
         try {
           const gradeResponse = await client.messages.create({
-            model: "claude-sonnet-4-20250514",
+            model: "claude-haiku-4-5-20251001",
             max_tokens: 256,
             system:
               "You are a fair but encouraging quiz grader. Grade the student's answer and give brief feedback. Return ONLY valid JSON with no markdown.",

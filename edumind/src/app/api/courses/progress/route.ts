@@ -1,5 +1,5 @@
 import { auth } from "@clerk/nextjs/server";
-import { supabase } from "@/lib/supabase";
+import { supabaseAdmin as supabase } from "@/lib/supabaseAdmin";
 import { NextRequest, NextResponse } from "next/server";
 
 // GET: Fetch user's course progress (all or specific course)

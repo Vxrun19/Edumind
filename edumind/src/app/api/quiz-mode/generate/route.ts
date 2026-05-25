@@ -1,6 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { auth } from "@clerk/nextjs/server";
-import { supabase } from "@/lib/supabase";
+import { supabaseAdmin as supabase } from "@/lib/supabaseAdmin";
 import { NextRequest, NextResponse } from "next/server";
 
 const client = new Anthropic();
@@ -34,7 +34,7 @@ async function callAPI(
   userPrompt: string
 ): Promise<GeneratedQuestion[]> {
   const apiCall = client.messages.create({
-    model: "claude-sonnet-4-20250514",
+    model: "claude-haiku-4-5-20251001",
     max_tokens: 4096,
     system: systemPrompt,
     messages: [{ role: "user", content: userPrompt }],

@@ -1,6 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { auth } from "@clerk/nextjs/server";
-import { supabase } from "@/lib/supabase";
+import { supabaseAdmin as supabase } from "@/lib/supabaseAdmin";
 import type { StudentProfile } from "@/lib/supabase";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -46,7 +46,7 @@ Rules:
 - Always end with an encouraging note or follow-up question`;
 
     const response = await client.messages.create({
-      model: "claude-sonnet-4-20250514",
+      model: "claude-sonnet-4-6",
       max_tokens: 1024,
       system: systemPrompt,
       messages: messages.map((msg: { role: string; content: string }) => ({

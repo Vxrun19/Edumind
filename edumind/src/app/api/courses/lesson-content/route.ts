@@ -1,6 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { auth } from "@clerk/nextjs/server";
-import { supabase } from "@/lib/supabase";
+import { supabaseAdmin as supabase } from "@/lib/supabaseAdmin";
 import type { StudentProfile, LearningAssessment } from "@/lib/supabase";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -65,7 +65,7 @@ Include hints for each exercise.
 Make the content feel conversational and encouraging. Use emojis sparingly for visual breaks. Adapt the complexity based on the course difficulty level.`;
 
     const response = await client.messages.create({
-      model: "claude-sonnet-4-20250514",
+      model: "claude-haiku-4-5-20251001",
       max_tokens: 4096,
       system: systemPrompt,
       messages: [{ role: "user", content: userPrompt }],

@@ -1,6 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { auth } from "@clerk/nextjs/server";
-import { supabase } from "@/lib/supabase";
+import { supabaseAdmin as supabase } from "@/lib/supabaseAdmin";
 import { rateLimit } from "@/lib/ratelimit";
 import type {
   StudentProfile,
@@ -395,10 +395,10 @@ export async function POST(request: NextRequest) {
     }
 
     const response = await client.messages.create({
-      model: "claude-sonnet-4-20250514",
+      model: "claude-sonnet-4-6",
       max_tokens: 1024,
       system: systemPrompt,
-      messages: messages.map((msg: { role: string; content: string }) => ({
+      messages: messages.slice(-10).map((msg: { role: string; content: string }) => ({
         role: msg.role as "user" | "assistant",
         content: msg.content,
       })),
