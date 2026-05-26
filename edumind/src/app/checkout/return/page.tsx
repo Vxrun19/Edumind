@@ -9,12 +9,51 @@ import posthog from "posthog-js";
 function ReturnContent() {
   const searchParams = useSearchParams();
   const sessionId = searchParams.get("session_id");
+  const provider = searchParams.get("provider");
   const router = useRouter();
   const [status, setStatus] = useState<"loading" | "success" | "error">(
     "loading"
   );
 
   useEffect(() => {
+    // ─── Razorpay return ──────────────────────────────────
+    // Razorpay's modal calls our handler immediately on success, but the
+    // webhook (subscription.activated) is the source of truth and may
+    // take a couple of seconds to land. Poll /api/subscription for
+    // plan='pro' up to ~16 seconds, then bail out to error.
+    if (provider === "razorpay") {
+      let cancelled = false;
+      let attempts = 0;
+      const maxAttempts = 8;
+      const poll = async () => {
+        if (cancelled) return;
+        try {
+          const res = await fetch("/api/subscription");
+          if (res.ok) {
+            const data = await res.json();
+            if (data.plan === "pro") {
+              setStatus("success");
+              posthog.capture("upgrade_completed", { provider: "razorpay" });
+              return;
+            }
+          }
+        } catch {
+          /* ignore — retry */
+        }
+        attempts++;
+        if (attempts < maxAttempts) {
+          setTimeout(poll, 2000);
+        } else {
+          setStatus("error");
+        }
+      };
+      poll();
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    // ─── Stripe return (existing) ─────────────────────────
     if (!sessionId) {
       router.replace("/pricing");
       return;
@@ -25,13 +64,13 @@ function ReturnContent() {
       .then((data) => {
         if (data.status === "complete") {
           setStatus("success");
-          posthog.capture("upgrade_completed");
+          posthog.capture("upgrade_completed", { provider: "stripe" });
         } else {
           setStatus("error");
         }
       })
       .catch(() => setStatus("error"));
-  }, [sessionId, router]);
+  }, [sessionId, provider, router]);
 
   if (status === "loading") {
     return (

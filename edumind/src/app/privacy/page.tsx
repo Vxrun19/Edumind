@@ -89,7 +89,8 @@ export default function PrivacyPage() {
                 Your data is stored securely using industry-standard encryption.
                 We use Supabase for data storage and Clerk for authentication, both
                 of which maintain SOC 2 compliance. Payment information is processed
-                by Stripe and never stored on our servers.
+                by Razorpay (for Indian customers) or Stripe (for international
+                customers) and is never stored on our servers.
               </p>
             </section>
 
@@ -105,9 +106,9 @@ export default function PrivacyPage() {
                 style={{ color: "var(--text-secondary)" }}
               >
                 We use Anthropic (Claude) for AI tutoring, Clerk for authentication,
-                Supabase for data storage, Stripe for payments, and Vercel for
-                hosting. Each service has its own privacy policy governing how they
-                handle data.
+                Supabase for data storage, Razorpay (India) and Stripe (international)
+                for payments, and Vercel for hosting. Each service has its own
+                privacy policy governing how they handle data.
               </p>
             </section>
 
@@ -123,7 +124,7 @@ export default function PrivacyPage() {
                 style={{ color: "var(--text-secondary)" }}
               >
                 You may request access to, correction of, or deletion of your
-                personal data at any time by contacting us at hello@edumind.app.
+                personal data at any time by contacting us at varunpatelai@gmail.com.
                 You can delete your account and all associated data from your
                 profile settings.
               </p>
@@ -141,7 +142,7 @@ export default function PrivacyPage() {
                 style={{ color: "var(--text-secondary)" }}
               >
                 For questions about this privacy policy, contact us at
-                hello@edumind.app.
+                varunpatelai@gmail.com.
               </p>
             </section>
           </div>

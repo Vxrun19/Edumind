@@ -20,6 +20,7 @@ export function Footer() {
               { label: 'Pricing', href: '/pricing' },
               { label: 'Privacy', href: '/privacy' },
               { label: 'Terms', href: '/terms' },
+              { label: 'Refunds', href: '/refund-policy' },
             ].map((item) => (
               <Link
                 key={item.label}

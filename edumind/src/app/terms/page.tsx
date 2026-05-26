@@ -105,9 +105,10 @@ export default function TermsPage() {
                 style={{ color: "var(--text-secondary)" }}
               >
                 Free accounts are available with usage limits. Pro subscriptions are
-                billed monthly or yearly through Stripe. You may cancel at any time
-                and retain access through the end of your billing period. Refunds are
-                handled on a case-by-case basis.
+                billed monthly or yearly through Razorpay (for Indian customers, in
+                INR) or Stripe (for international customers, in USD). You may cancel
+                at any time and retain access through the end of your billing period.
+                See our refund and cancellation policy at /refund-policy for details.
               </p>
             </section>
 
@@ -157,7 +158,7 @@ export default function TermsPage() {
                 className="font-sans text-sm leading-relaxed"
                 style={{ color: "var(--text-secondary)" }}
               >
-                For questions about these terms, contact us at hello@edumind.app.
+                For questions about these terms, contact us at varunpatelai@gmail.com.
               </p>
             </section>
           </div>

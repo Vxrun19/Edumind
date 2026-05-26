@@ -1,7 +1,6 @@
 export const PLANS = {
   free: {
     name: 'Free',
-    price: 0,
     limits: {
       messagesPerDay: 20,
       quizzesPerDay: 3,
@@ -12,10 +11,16 @@ export const PLANS = {
   },
   pro: {
     name: 'Pro',
-    price: 9.99,
-    priceYearly: 79.99,
-    stripePriceIdMonthly: 'price_placeholder_monthly',
-    stripePriceIdYearly: 'price_placeholder_yearly',
+    // INR pricing (India — Razorpay). Razorpay Plan IDs are configured via
+    // RAZORPAY_PLAN_ID_MONTHLY / RAZORPAY_PLAN_ID_YEARLY env vars consumed
+    // by /api/razorpay/checkout.
+    priceInrMonthly: 399,
+    priceInrYearly: 2999,
+    // USD pricing (International — Stripe). Real Stripe price IDs come from
+    // NEXT_PUBLIC_STRIPE_PRICE_MONTHLY / NEXT_PUBLIC_STRIPE_PRICE_YEARLY env
+    // vars consumed by src/app/pricing/page.tsx.
+    priceUsdMonthly: 9.99,
+    priceUsdYearly: 79.99,
     limits: {
       messagesPerDay: 999,
       quizzesPerDay: 999,
@@ -27,3 +32,5 @@ export const PLANS = {
 } as const;
 
 export type Plan = 'free' | 'pro';
+export type Region = 'india' | 'international';
+export type PaymentProvider = 'razorpay' | 'stripe';
