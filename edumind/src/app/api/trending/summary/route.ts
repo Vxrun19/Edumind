@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
       messages: [
         {
           role: "user",
-          content: `Give me a quick 3-point summary of "${topic}" (${description || "a trending topic"}). Format your response as JSON with exactly these three fields:
+          content: `Give me a quick 3-point summary of "${topic}" (${description || "a JEE/NEET topic"}). Format your response as JSON with exactly these three fields:
 - "what_it_is": one sentence explaining what it is
 - "why_it_matters": one sentence on why it matters right now
 - "how_to_start": one sentence on how to get started learning about it

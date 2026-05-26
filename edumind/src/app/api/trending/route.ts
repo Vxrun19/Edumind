@@ -68,7 +68,7 @@ async function generateTopics(): Promise<TrendingTopic[]> {
     messages: [
       {
         role: "user",
-        content: `Generate a JSON array of 20 currently trending topics that students would want to learn about as of today. Include topics from: AI tools (like Claude Code, new AI releases), coding tools, science discoveries, business trends, useful life skills, and viral educational topics. For each topic return: title, category, description (one sentence), trend_status (hot/rising/new), why_relevant (one sentence explaining why this matters right now), and difficulty (beginner/intermediate/advanced). Return only valid JSON, no other text.`,
+        content: `Generate a JSON array of 20 high-yield topics for Indian JEE and NEET aspirants. Topics should be drawn from the JEE (Main and Advanced) and NEET (UG) syllabi across Physics, Chemistry, Mathematics, and Biology. For each topic return: title (the specific topic, e.g. "Rotational Dynamics" or "p-Block Elements"), category (one of: "Physics", "Chemistry", "Mathematics", "Biology"), description (one sentence summarizing the topic), trend_status (one of: "hot" for high-yield frequently-tested topics, "rising" for topics students commonly struggle with, "new" for core fundamentals that anchor multiple sub-topics), why_relevant (one sentence on why this topic matters for JEE/NEET — its weightage, recurring exam patterns, or as foundation for harder problems), and difficulty (beginner/intermediate/advanced). Return a balanced mix across all four subjects. Return only valid JSON, no other text.`,
       },
     ],
   });
