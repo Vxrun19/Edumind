@@ -3,45 +3,90 @@
 import Link from 'next/link'
 import { ScrollReveal } from '@/components/animations'
 
+// The closing conversion moment. After seven light sections, this is
+// the one DARK band on the page — a deep violet→blue ground with a
+// subtle ambient halo. The dark itself is the punctuation; the headline
+// + microcopy + button cascade on scroll.
 export function CTASection() {
   return (
     <section
-      className="px-6 mt-[100px]"
+      className="relative w-full px-6 py-28 md:py-36 overflow-hidden"
       style={{
-        background: 'var(--bg-warm)',
-        borderTop: '1px solid var(--border)',
-        borderBottom: '1px solid var(--border)',
+        // Layered background:
+        //   1. Linear from deep indigo to deep blue — the "night sky"
+        //      ground; rich, not flat black.
+        //   2. (As an overlay div below) a soft violet halo from the
+        //      top center, like an ambient stage light.
+        background: 'linear-gradient(180deg, #14122E 0%, #0B1330 100%)',
       }}
+      aria-labelledby="cta-heading"
     >
-      <ScrollReveal>
-        <div className="max-w-3xl mx-auto py-20 text-center">
-          {/* Small ruled ornament */}
-          <div
-            className="w-12 h-[1px] mx-auto mb-6"
-            style={{ background: 'var(--border-accent)' }}
-          />
+      {/* Ambient radial glow. Sits above the linear ground, below the
+       *  content. Pointer-events-none so it never blocks the CTA. */}
+      <div
+        aria-hidden="true"
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background:
+            'radial-gradient(ellipse 90% 55% at 50% 0%, rgba(139, 92, 246, 0.22), transparent 70%)',
+        }}
+      />
 
+      <div className="relative z-10 max-w-3xl mx-auto text-center">
+        {/* Headline — confident serif, pure white. Smaller than the
+         *  hero's 140px ceiling so the hierarchy reads hero → close. */}
+        <ScrollReveal y={20}>
           <h2
-            className="font-serif text-[30px] font-normal"
-            style={{ color: 'var(--text-primary)' }}
+            id="cta-heading"
+            className="font-serif font-normal mx-auto"
+            style={{
+              color: '#FFFFFF',
+              fontSize: 'clamp(36px, 5vw, 72px)',
+              lineHeight: 1.1,
+              letterSpacing: '-0.02em',
+              maxWidth: '18ch',
+            }}
           >
             Start your JEE or NEET prep today.
           </h2>
+        </ScrollReveal>
+
+        {/* Honest microcopy — preserved verbatim. White at 65% opacity
+         *  reads as quiet on the dark ground while staying well above
+         *  AA contrast (≈11:1 on #14122E). */}
+        <ScrollReveal delay={0.15} y={12}>
           <p
-            className="font-serif text-[16px] mt-3"
-            style={{ color: 'var(--text-secondary)' }}
+            className="font-serif mt-5 md:mt-6 mx-auto"
+            style={{
+              color: 'rgba(255, 255, 255, 0.65)',
+              fontSize: 'clamp(15px, 1.3vw, 17px)',
+              lineHeight: 1.6,
+              maxWidth: '48ch',
+            }}
           >
             Free to start. No credit card. Cancel anytime.
           </p>
+        </ScrollReveal>
+
+        {/* Primary CTA — the brand .btn-primary (violet→blue gradient
+         *  pill with glow). On this dark ground the glow becomes much
+         *  more visible than it is in the light sections — the button
+         *  reads as the obvious next step. Slight inline bump to font
+         *  size and padding makes the closing CTA visually heavier
+         *  than the inline CTAs earlier on the page. */}
+        <ScrollReveal delay={0.3} y={14}>
           <Link
             href="/dashboard"
-            className="inline-block font-sans text-[14px] font-medium px-6 py-[11px] rounded-lg text-white mt-7 transition-all duration-200 hover:-translate-y-[1px] active:scale-[0.97]"
-            style={{ background: 'var(--accent)' }}
+            className="btn-primary inline-block mt-9 md:mt-10"
+            style={{
+              fontSize: '16px',
+              padding: '14px 28px',
+            }}
           >
-            {'Open your notebook \u2192'}
+            Start learning free →
           </Link>
-        </div>
-      </ScrollReveal>
+        </ScrollReveal>
+      </div>
     </section>
   )
 }
