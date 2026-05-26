@@ -324,7 +324,12 @@ function QuizContent() {
             <div className="panel p-10">
               <div className="mb-8">
                 <p className="label mb-2">Assessment Mode</p>
-                <h1>Test Your Knowledge</h1>
+                <h1
+                  className="font-serif text-[28px] md:text-[32px]"
+                  style={{ color: "var(--text-primary)", letterSpacing: "-0.3px" }}
+                >
+                  Test Your Knowledge
+                </h1>
               </div>
 
               {error && (
@@ -470,7 +475,12 @@ function QuizContent() {
         <div className="space-y-8">
           <div className="text-center">
             <p className="label mb-2">Question {currentIndex + 1} of {questions.length}</p>
-            <h1 className="text-center">{q.question}</h1>
+            <h1
+              className="font-serif text-[22px] md:text-[26px] text-center leading-snug"
+              style={{ color: "var(--text-primary)" }}
+            >
+              {q.question}
+            </h1>
           </div>
 
           <div className="space-y-3">
@@ -617,7 +627,12 @@ function QuizContent() {
             transition={{ duration: 0.3, ease: "easeInOut" }}
             className="text-center"
           >
-            <h1 className="text-5xl mb-2">{score}/{questions.length}</h1>
+            <h1
+              className="font-serif text-[56px] md:text-[72px] mb-2"
+              style={{ color: "var(--text-primary)", letterSpacing: "-1px" }}
+            >
+              {score}/{questions.length}
+            </h1>
             <p className="text-[var(--text-secondary)] mb-1">{performance.label}</p>
             <p className="text-sm text-[var(--text-tertiary)]">
               {percentage}% correct · Completed in {minutes > 0 ? `${minutes}m ` : ""}{seconds}s
@@ -632,7 +647,12 @@ function QuizContent() {
               transition={{ duration: 0.3, ease: "easeInOut", delay: 0.1 }}
               className="panel p-6"
             >
-              <h3 className="mb-4">Areas to Review</h3>
+              <h3
+                className="font-sans text-[16px] font-semibold mb-4"
+                style={{ color: "var(--text-primary)" }}
+              >
+                Areas to Review
+              </h3>
               <div className="flex flex-wrap gap-2">
                 {weakTopics.map((topic, i) => (
                   <span

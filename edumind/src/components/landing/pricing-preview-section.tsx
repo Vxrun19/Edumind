@@ -5,18 +5,17 @@ import { CheckCircle } from 'lucide-react'
 import { ScrollReveal, StaggerContainer, StaggerItem } from '@/components/animations'
 
 const freeFeatures = [
-  '20 AI messages per day',
+  '20 AI tutor messages per day',
   '3 quizzes per day',
-  '3 starter courses',
+  'All 4 subjects (PCM + Biology)',
   'Progress tracking',
 ]
 
 const proFeatures = [
-  'Unlimited messages',
+  'Unlimited AI tutor messages',
   'Unlimited quizzes',
-  'All 11 courses',
-  'Voice mode',
-  'Full assessment',
+  'Voice mode for hands-free study',
+  'Full personalization from assessment',
 ]
 
 export function PricingPreviewSection() {
@@ -99,7 +98,7 @@ export function PricingPreviewSection() {
                 className="font-serif text-[28px] mt-2"
                 style={{ color: 'var(--text-primary)' }}
               >
-                $9.99{' '}
+                ₹399{' '}
                 <span className="text-base" style={{ color: 'var(--text-tertiary)' }}>
                   / month
                 </span>

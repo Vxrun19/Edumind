@@ -192,7 +192,8 @@ export default function HistoryPage() {
                                 handleDelete(convo.id);
                               }}
                               disabled={deletingId === convo.id}
-                              className="ml-3 text-[11px] text-[var(--text-tertiary)] opacity-0 group-hover:opacity-100 transition-opacity"
+                              aria-label={`Delete conversation: ${convo.title}`}
+                              className="ml-3 text-[11px] text-[var(--text-tertiary)] opacity-60 hover:opacity-100 hover:text-[var(--text-secondary)] transition-opacity disabled:opacity-30"
                             >
                               {deletingId === convo.id ? "Deleting..." : "Delete"}
                             </button>

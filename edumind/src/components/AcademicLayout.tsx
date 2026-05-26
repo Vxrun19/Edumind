@@ -21,6 +21,7 @@ import {
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { PastDueBanner } from '@/components/PastDueBanner'
+import StreakBadge from '@/components/StreakBadge'
 
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -103,13 +104,8 @@ export function AcademicLayout({ children, rightPanel, pageNumber }: AcademicLay
         </div>
 
         <div className="flex items-center gap-3">
-          {/* Streak badge */}
-          <div
-            className="flex items-center gap-1 px-[10px] py-1 rounded-full font-sans text-[13px] font-semibold"
-            style={{ background: 'var(--accent-light)', color: 'var(--accent)' }}
-          >
-            <span>{'🔥'}</span> 0
-          </div>
+          {/* Streak — real value via StreakBadge (fetches /api/progress) */}
+          <StreakBadge />
           <span className="font-sans text-[14px]" style={{ color: 'var(--text-tertiary)' }}>
             {'\u00B7'}
           </span>

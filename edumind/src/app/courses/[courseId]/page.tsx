@@ -125,7 +125,7 @@ export default function CourseDetailPage() {
                   className="inline-block px-6 py-3 rounded-xl text-sm font-semibold text-white transition-all hover:opacity-90"
                   style={{ background: "var(--accent)" }}
                 >
-                  Upgrade to Pro — $9.99/mo
+                  Upgrade to Pro — ₹399/mo
                 </Link>
               </div>
             )}

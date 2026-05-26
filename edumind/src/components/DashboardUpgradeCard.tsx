@@ -24,14 +24,14 @@ export default function DashboardUpgradeCard() {
             Upgrade to Pro
           </h3>
           <p className="text-xs text-[var(--text-tertiary)] mb-3 leading-relaxed">
-            Unlock all 12 courses, unlimited chats, voice mode and more.
+            Unlock unlimited chats, voice mode and full personalization.
           </p>
           <Link
             href="/pricing"
             className="text-xs font-semibold transition-all hover:opacity-80"
             style={{ color: "var(--accent)" }}
           >
-            $9.99/month &rarr; See plans
+            ₹399/month &rarr; See plans
           </Link>
         </div>
       </div>

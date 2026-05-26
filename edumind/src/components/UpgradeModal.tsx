@@ -65,7 +65,7 @@ export default function UpgradeModal({ isOpen, onClose, reason }: UpgradeModalPr
             className="w-full py-3 rounded-xl text-sm font-semibold text-white transition-all hover:opacity-90"
             style={{ background: "var(--accent)" }}
           >
-            Upgrade to Pro — $9.99/mo
+            Upgrade to Pro — ₹399/mo
           </button>
           <button
             onClick={onClose}

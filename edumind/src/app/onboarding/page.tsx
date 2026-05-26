@@ -5,92 +5,84 @@ import { useUser } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import posthog from "posthog-js";
 
-const AGE_GROUPS = ["Under 10", "10-13", "14-17", "18-25", "25+"];
+/* ─── Question options ─────────────────────────────────────── */
 
-const GOALS = [
-  { id: "homework", label: "School homework", emoji: "📚" },
-  { id: "coding", label: "Learn coding", emoji: "💻" },
-  { id: "personal", label: "Personal growth", emoji: "🌱" },
-  { id: "career", label: "Career skills", emoji: "💼" },
-  { id: "curious", label: "Just curious", emoji: "🔍" },
-  { id: "other", label: "Other", emoji: "✨" },
-];
+const TRACKS = [
+  {
+    id: "jee",
+    title: "JEE",
+    subtitle: "Physics, Chemistry, Mathematics",
+    emoji: "🛠️",
+  },
+  {
+    id: "neet",
+    title: "NEET",
+    subtitle: "Physics, Chemistry, Biology",
+    emoji: "🧬",
+  },
+  {
+    id: "both",
+    title: "Still deciding",
+    subtitle: "Between JEE and NEET",
+    emoji: "🤔",
+  },
+] as const;
 
-const LEARNING_STYLES = [
-  {
-    id: "simple",
-    label: "Explain simply with examples",
-    desc: "Use analogies and real-life examples",
-  },
-  {
-    id: "theory",
-    label: "Give me the theory first",
-    desc: "Concepts before examples",
-  },
-  {
-    id: "stepbystep",
-    label: "Teach me step by step",
-    desc: "Numbered steps, one at a time",
-  },
-  {
-    id: "challenge",
-    label: "Challenge me with questions",
-    desc: "Ask questions to make me think",
-  },
-  {
-    id: "mix",
-    label: "Mix it up",
-    desc: "A bit of everything depending on the topic",
-  },
-];
+type TrackId = (typeof TRACKS)[number]["id"];
 
-const LEVELS = [
-  "Complete beginner",
-  "Some basics",
-  "Intermediate",
-  "Pretty advanced",
-];
+const YEARS = [
+  { id: "2026", label: "2026" },
+  { id: "2027", label: "2027" },
+  { id: "2028", label: "2028" },
+  { id: "unsure", label: "Not sure yet" },
+] as const;
+
+type YearId = (typeof YEARS)[number]["id"];
+
+/* Builds the goal string stored in the StudentProfile. The chat
+ * system prompt reads this back as exam-prep context. */
+function buildGoal(track: TrackId, year: YearId): string {
+  const examLabel =
+    track === "jee" ? "JEE" : track === "neet" ? "NEET" : "JEE or NEET (still deciding)";
+  if (year === "unsure") {
+    return `Preparing for ${examLabel} (target year not set yet)`;
+  }
+  return `Preparing for ${examLabel} ${year}`;
+}
+
+/* ─── Component ────────────────────────────────────────────── */
 
 export default function OnboardingPage() {
   const { user } = useUser();
   const router = useRouter();
 
-  const [step, setStep] = useState(0);
+  const [step, setStep] = useState<0 | 1 | 2>(0);
   const [displayName, setDisplayName] = useState(user?.firstName || "");
-  const [ageGroup, setAgeGroup] = useState("");
-  const [selectedGoals, setSelectedGoals] = useState<string[]>([]);
-  const [learningStyle, setLearningStyle] = useState("");
-  const [level, setLevel] = useState("");
+  const [track, setTrack] = useState<TrackId | "">("");
+  const [year, setYear] = useState<YearId | "">("");
   const [isSaving, setIsSaving] = useState(false);
 
-  function toggleGoal(goalId: string) {
-    setSelectedGoals((prev) =>
-      prev.includes(goalId)
-        ? prev.filter((g) => g !== goalId)
-        : [...prev, goalId]
-    );
-  }
-
   async function handleFinish() {
+    if (!track || !year) return;
     setIsSaving(true);
     try {
       await fetch("/api/profile", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          display_name: displayName || user?.firstName || "Learner",
-          age_group: ageGroup,
-          goals: selectedGoals,
-          learning_style: learningStyle,
-          level,
+          display_name: displayName || user?.firstName || "Aspirant",
+          // Defaults for legacy profile fields the chat system prompt still
+          // reads; chosen to match the JEE/NEET audience without re-asking.
+          age_group: "16-19",
+          goals: [buildGoal(track, year)],
+          learning_style: "Explain simply with examples",
+          level: "Some basics",
         }),
       });
 
       posthog.capture("onboarding_completed", {
-        age_group: ageGroup,
-        goals: selectedGoals,
-        learning_style: learningStyle,
-        level,
+        track,
+        target_year: year,
       });
 
       router.push("/dashboard");
@@ -99,108 +91,136 @@ export default function OnboardingPage() {
     }
   }
 
-  const canProceed = [
-    displayName.trim() && ageGroup,
-    selectedGoals.length > 0,
-    learningStyle,
-    level,
-  ];
+  const canProceed: Record<0 | 1 | 2, boolean> = {
+    0: displayName.trim().length > 0,
+    1: track !== "",
+    2: year !== "",
+  };
 
   return (
     <main className="min-h-[calc(100vh-57px)] bg-[var(--bg-base)] flex items-center justify-center px-4 py-10">
       <div className="max-w-lg w-full">
-        {/* Progress dots */}
+        {/* Progress dots — 3 steps */}
         <div className="flex items-center justify-center gap-2 mb-8">
-          {[0, 1, 2, 3].map((i) => (
+          {[0, 1, 2].map((i) => (
             <div
               key={i}
-              className={`w-2.5 h-2.5 rounded-full transition-colors ${
-                i === step
-                  ? "bg-[var(--accent)]"
-                  : i < step
-                    ? "bg-[var(--accent)]"
-                    : "bg-[var(--bg-surface)]"
-              }`}
+              className="rounded-full transition-all"
+              style={{
+                width: i === step ? 24 : 8,
+                height: 8,
+                background: i <= step ? "var(--accent)" : "var(--border)",
+              }}
             />
           ))}
         </div>
 
-        {/* ─── Step 0: Name + Age ─── */}
+        {/* ─── Step 0: Welcome + name ───────────────────────── */}
         {step === 0 && (
           <div className="text-center">
             <div className="text-5xl mb-4">👋</div>
             <h1 className="text-2xl font-bold text-[var(--text-primary)] mb-2">
-              Welcome to EduMind!
+              Welcome to EduMind.
             </h1>
             <p className="text-[var(--text-secondary)] mb-8">
-              Let&apos;s personalize your learning experience.
+              Three quick questions and the tutor will know how to help you.
             </p>
 
-            <div className="text-left space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
-                  What&apos;s your name?
-                </label>
-                <input
-                  type="text"
-                  value={displayName}
-                  onChange={(e) => setDisplayName(e.target.value)}
-                  placeholder="Your name"
-                  className="w-full rounded-xl bg-[var(--bg-muted)] border border-[var(--border)] px-4 py-3 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
-                  How old are you?
-                </label>
-                <div className="grid grid-cols-3 gap-2">
-                  {AGE_GROUPS.map((age) => (
-                    <button
-                      key={age}
-                      onClick={() => setAgeGroup(age)}
-                      className={`px-3 py-2.5 rounded-xl text-sm font-medium border transition-all ${
-                        ageGroup === age
-                          ? "bg-[var(--accent-light)] border-[var(--accent)] text-[var(--accent)] shadow-[var(--shadow-sm)]"
-                          : "bg-[var(--bg-muted)] border-[var(--border)] text-[var(--text-secondary)] hover:bg-[var(--bg-surface)] hover:border-[var(--border-strong)]"
-                      }`}
-                    >
-                      {age}
-                    </button>
-                  ))}
-                </div>
-              </div>
+            <div className="text-left">
+              <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
+                What should we call you?
+              </label>
+              <input
+                type="text"
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
+                placeholder="Your name"
+                autoFocus
+                className="w-full rounded-xl bg-[var(--bg-muted)] border border-[var(--border)] px-4 py-3 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
+              />
             </div>
           </div>
         )}
 
-        {/* ─── Step 1: Goals ─── */}
+        {/* ─── Step 1: Track ────────────────────────────────── */}
         {step === 1 && (
           <div className="text-center">
             <div className="text-5xl mb-4">🎯</div>
             <h1 className="text-2xl font-bold text-[var(--text-primary)] mb-2">
-              Why are you here?
+              Which exam are you preparing for?
             </h1>
             <p className="text-[var(--text-secondary)] mb-8">
-              Pick all that apply — this helps us tailor your experience.
+              Both share Physics and Chemistry. JEE adds Maths; NEET adds Biology.
+            </p>
+
+            <div className="space-y-2.5">
+              {TRACKS.map((t) => (
+                <button
+                  key={t.id}
+                  type="button"
+                  onClick={() => setTrack(t.id)}
+                  className={`w-full p-4 rounded-xl border text-left transition-all flex items-center gap-3 ${
+                    track === t.id
+                      ? "bg-[var(--accent-light)] border-[var(--accent)] shadow-[var(--shadow-sm)]"
+                      : "bg-[var(--bg-muted)] border-[var(--border)] hover:bg-[var(--bg-surface)] hover:border-[var(--border-strong)]"
+                  }`}
+                >
+                  <span className="text-2xl">{t.emoji}</span>
+                  <div className="flex-1">
+                    <div
+                      className="text-sm font-semibold"
+                      style={{
+                        color:
+                          track === t.id
+                            ? "var(--accent)"
+                            : "var(--text-primary)",
+                      }}
+                    >
+                      {t.title}
+                    </div>
+                    <div className="text-xs text-[var(--text-tertiary)] mt-0.5">
+                      {t.subtitle}
+                    </div>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ─── Step 2: Target year ──────────────────────────── */}
+        {step === 2 && (
+          <div className="text-center">
+            <div className="text-5xl mb-4">📅</div>
+            <h1 className="text-2xl font-bold text-[var(--text-primary)] mb-2">
+              When&apos;s your exam?
+            </h1>
+            <p className="text-[var(--text-secondary)] mb-8">
+              We&apos;ll pace your study around your target.
             </p>
 
             <div className="grid grid-cols-2 gap-3">
-              {GOALS.map((goal) => (
+              {YEARS.map((y) => (
                 <button
-                  key={goal.id}
-                  onClick={() => toggleGoal(goal.id)}
-                  className={`p-4 rounded-xl border text-left transition-all ${
-                    selectedGoals.includes(goal.id)
+                  key={y.id}
+                  type="button"
+                  onClick={() => setYear(y.id)}
+                  className={`p-4 rounded-xl border text-center transition-all ${
+                    year === y.id
                       ? "bg-[var(--accent-light)] border-[var(--accent)] shadow-[var(--shadow-sm)]"
                       : "bg-[var(--bg-muted)] border-[var(--border)] hover:bg-[var(--bg-surface)] hover:border-[var(--border-strong)]"
                   }`}
                 >
-                  <div className="text-2xl mb-1">{goal.emoji}</div>
                   <div
-                    className={`text-sm font-medium ${selectedGoals.includes(goal.id) ? "text-[var(--accent)]" : "text-[var(--text-secondary)]"}`}
+                    className="text-sm font-semibold"
+                    style={{
+                      color:
+                        year === y.id
+                          ? "var(--accent)"
+                          : "var(--text-primary)",
+                    }}
                   >
-                    {goal.label}
+                    {y.label}
                   </div>
                 </button>
               ))}
@@ -208,80 +228,11 @@ export default function OnboardingPage() {
           </div>
         )}
 
-        {/* ─── Step 2: Learning Style ─── */}
-        {step === 2 && (
-          <div className="text-center">
-            <div className="text-5xl mb-4">🧠</div>
-            <h1 className="text-2xl font-bold text-[var(--text-primary)] mb-2">
-              How do you like to learn?
-            </h1>
-            <p className="text-[var(--text-secondary)] mb-8">
-              Pick the style that feels most natural to you.
-            </p>
-
-            <div className="space-y-2">
-              {LEARNING_STYLES.map((style) => (
-                <button
-                  key={style.id}
-                  onClick={() => setLearningStyle(style.label)}
-                  className={`w-full p-4 rounded-xl border text-left transition-all ${
-                    learningStyle === style.label
-                      ? "bg-[var(--accent-light)] border-[var(--accent)] shadow-[var(--shadow-sm)]"
-                      : "bg-[var(--bg-muted)] border-[var(--border)] hover:bg-[var(--bg-surface)] hover:border-[var(--border-strong)]"
-                  }`}
-                >
-                  <div
-                    className={`text-sm font-medium ${learningStyle === style.label ? "text-[var(--accent)]" : "text-[var(--text-secondary)]"}`}
-                  >
-                    {style.label}
-                  </div>
-                  <div className="text-xs text-[var(--text-tertiary)] mt-0.5">
-                    {style.desc}
-                  </div>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* ─── Step 3: Level ─── */}
-        {step === 3 && (
-          <div className="text-center">
-            <div className="text-5xl mb-4">📊</div>
-            <h1 className="text-2xl font-bold text-[var(--text-primary)] mb-2">
-              What&apos;s your current level?
-            </h1>
-            <p className="text-[var(--text-secondary)] mb-8">
-              This helps us pitch explanations at the right level.
-            </p>
-
-            <div className="space-y-2">
-              {LEVELS.map((lvl) => (
-                <button
-                  key={lvl}
-                  onClick={() => setLevel(lvl)}
-                  className={`w-full p-4 rounded-xl border text-left transition-all ${
-                    level === lvl
-                      ? "bg-[var(--accent-light)] border-[var(--accent)] shadow-[var(--shadow-sm)]"
-                      : "bg-[var(--bg-muted)] border-[var(--border)] hover:bg-[var(--bg-surface)] hover:border-[var(--border-strong)]"
-                  }`}
-                >
-                  <div
-                    className={`text-sm font-medium ${level === lvl ? "text-[var(--accent)]" : "text-[var(--text-secondary)]"}`}
-                  >
-                    {lvl}
-                  </div>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Navigation buttons */}
+        {/* ─── Navigation ───────────────────────────────────── */}
         <div className="flex items-center justify-between mt-8">
           {step > 0 ? (
             <button
-              onClick={() => setStep(step - 1)}
+              onClick={() => setStep((step - 1) as 0 | 1 | 2)}
               className="text-sm text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] transition-colors"
             >
               ← Back
@@ -290,21 +241,21 @@ export default function OnboardingPage() {
             <div />
           )}
 
-          {step < 3 ? (
+          {step < 2 ? (
             <button
-              onClick={() => setStep(step + 1)}
+              onClick={() => setStep((step + 1) as 0 | 1 | 2)}
               disabled={!canProceed[step]}
-              className="font-medium px-6 py-2.5 rounded-xl transition-all text-sm bg-[var(--accent)] text-[var(--bg-base)] shadow-[var(--shadow-sm)] hover:shadow-[var(--shadow-sm)] disabled:opacity-40 disabled:shadow-none"
+              className="font-medium px-6 py-2.5 rounded-xl transition-all text-sm bg-[var(--accent)] text-white shadow-[var(--shadow-sm)] disabled:opacity-40 disabled:shadow-none"
             >
               Continue →
             </button>
           ) : (
             <button
               onClick={handleFinish}
-              disabled={!level || isSaving}
-              className="font-medium px-8 py-3 rounded-xl transition-all text-sm bg-[var(--accent)] text-[var(--bg-base)] shadow-[var(--shadow-sm)] hover:shadow-[var(--shadow-sm)] disabled:opacity-40 disabled:shadow-none"
+              disabled={!canProceed[2] || isSaving}
+              className="font-medium px-8 py-3 rounded-xl transition-all text-sm bg-[var(--accent)] text-white shadow-[var(--shadow-sm)] disabled:opacity-40 disabled:shadow-none"
             >
-              {isSaving ? "Saving..." : "Let's Go! 🚀"}
+              {isSaving ? "Saving..." : "Start studying →"}
             </button>
           )}
         </div>
