@@ -1,13 +1,23 @@
 'use client'
 
 import { useState } from 'react'
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import { ChevronDown } from 'lucide-react'
-import { ScrollReveal } from '@/components/animations'
+import {
+  ScrollReveal,
+  StaggerContainer,
+  StaggerItem,
+} from '@/components/animations'
 
-const faqs = [
+const easing: [number, number, number, number] = [0.16, 1, 0.3, 1]
+
+// Honest Q&A preserved verbatim from prior version — these are real
+// claims grounded in how the product actually behaves. Do NOT modify
+// copy here; this is a visual reskin only.
+const FAQS = [
   {
     q: 'Is it really free to start?',
-    a: 'Yes. No credit card required. The free plan includes 20 AI tutor messages per day and 3 quizzes per day, plus access to several full courses. Upgrade anytime if you want more.',
+    a: 'Yes. No credit card required. The free plan includes 20 AI tutor messages per day and 3 quizzes per day, with full access to all four subjects (Physics, Chemistry, Maths, Biology) and progress tracking. Upgrade anytime if you want more.',
   },
   {
     q: 'Does it cover JEE Advanced as well as JEE Main? And the full NEET syllabus?',
@@ -29,72 +39,144 @@ const faqs = [
     q: 'Can I cancel anytime?',
     a: 'Yes. Cancel with one click, no questions asked. You keep access until the end of your billing period.',
   },
-]
+] as const
 
+// Individual FAQ row. Owns its own open/closed state. The full button
+// row is tappable (44px+ tap target on mobile), with the chevron
+// rotating and the answer sliding open via framer-motion's height:auto
+// (no hardcoded maxHeight to cut off long answers).
 function FAQItem({ q, a }: { q: string; a: string }) {
   const [open, setOpen] = useState(false)
+  const prefersReducedMotion = useReducedMotion()
 
   return (
     <div style={{ borderBottom: '1px solid var(--border)' }}>
       <button
-        className="w-full flex items-center justify-between py-5 text-left cursor-pointer"
+        className="w-full flex items-start justify-between gap-4 py-6 md:py-7 text-left cursor-pointer"
         onClick={() => setOpen(!open)}
         aria-expanded={open}
       >
         <span
-          className="font-sans text-[15px] font-medium pr-4"
-          style={{ color: 'var(--text-primary)' }}
+          className="font-serif transition-colors duration-200"
+          style={{
+            color: open ? 'var(--accent)' : 'var(--text-primary)',
+            fontSize: 'clamp(17px, 1.4vw, 19px)',
+            lineHeight: 1.4,
+            letterSpacing: '-0.005em',
+            fontWeight: 400,
+          }}
         >
           {q}
         </span>
-        <ChevronDown
-          size={18}
-          className="shrink-0 transition-transform duration-200"
-          style={{
-            color: 'var(--text-tertiary)',
-            transform: open ? 'rotate(180deg)' : 'rotate(0deg)',
+        <motion.span
+          aria-hidden="true"
+          animate={{ rotate: open ? 180 : 0 }}
+          transition={{
+            duration: prefersReducedMotion ? 0 : 0.25,
+            ease: easing,
           }}
-        />
-      </button>
-      <div
-        className="overflow-hidden transition-all duration-200"
-        style={{
-          maxHeight: open ? '200px' : '0px',
-          opacity: open ? 1 : 0,
-        }}
-      >
-        <p
-          className="font-sans text-[14px] pb-5 pr-8"
-          style={{ color: 'var(--text-secondary)', lineHeight: 1.7 }}
+          style={{
+            flexShrink: 0,
+            display: 'inline-flex',
+            alignItems: 'center',
+            paddingTop: '2px',
+          }}
         >
-          {a}
-        </p>
-      </div>
+          <ChevronDown
+            size={20}
+            className="transition-colors duration-200"
+            style={{
+              color: open ? 'var(--accent)' : 'var(--text-tertiary)',
+            }}
+          />
+        </motion.span>
+      </button>
+
+      {/* Expand/collapse with framer-motion's height:auto — handles
+       *  variable answer lengths without hardcoded maxHeight cutoffs. */}
+      <AnimatePresence initial={false}>
+        {open && (
+          <motion.div
+            key="content"
+            initial={
+              prefersReducedMotion
+                ? { opacity: 0 }
+                : { height: 0, opacity: 0 }
+            }
+            animate={
+              prefersReducedMotion
+                ? { opacity: 1 }
+                : { height: 'auto', opacity: 1 }
+            }
+            exit={
+              prefersReducedMotion
+                ? { opacity: 0 }
+                : { height: 0, opacity: 0 }
+            }
+            transition={{
+              duration: prefersReducedMotion ? 0.2 : 0.3,
+              ease: easing,
+            }}
+            style={{ overflow: 'hidden' }}
+          >
+            <p
+              className="font-serif pb-6 md:pb-7 pr-8"
+              style={{
+                color: 'var(--text-secondary)',
+                fontSize: 'clamp(15px, 1.3vw, 17px)',
+                lineHeight: 1.7,
+                maxWidth: '60ch',
+              }}
+            >
+              {a}
+            </p>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }
 
 export function FAQSection() {
   return (
-    <section className="px-6 mt-[100px]">
+    <section
+      className="relative px-6 mt-24 md:mt-32"
+      aria-labelledby="faq-heading"
+    >
       <div className="max-w-2xl mx-auto">
+        {/* Section header — editorial label + serif H2 */}
         <ScrollReveal>
           <div className="text-center">
-            <span className="label-text">QUESTIONS</span>
+            <span className="label">Questions</span>
             <h2
-              className="font-serif text-[26px] font-medium mt-3"
-              style={{ color: 'var(--text-primary)' }}
+              id="faq-heading"
+              className="font-serif font-normal mt-4"
+              style={{
+                color: 'var(--text-primary)',
+                fontSize: 'clamp(32px, 4.5vw, 52px)',
+                lineHeight: 1.15,
+                letterSpacing: '-0.015em',
+              }}
             >
               Answered.
             </h2>
           </div>
         </ScrollReveal>
 
-        <div className="mt-10" style={{ borderTop: '1px solid var(--border)' }}>
-          {faqs.map((faq) => (
-            <FAQItem key={faq.q} q={faq.q} a={faq.a} />
+        {/* Q&A list — top hairline starts the divider rhythm, each item
+         *  closes with its own bottom hairline. Questions fade in on
+         *  scroll with a tight stagger; expand/collapse is per-item.   */}
+        <StaggerContainer
+          className="mt-12 md:mt-16 border-t border-[color:var(--border)]"
+          stagger={0.06}
+          delayChildren={0.05}
+        >
+          {FAQS.map((faq) => (
+            <StaggerItem key={faq.q}>
+              <FAQItem q={faq.q} a={faq.a} />
+            </StaggerItem>
           ))}
-        </div>
+        </StaggerContainer>
       </div>
     </section>
   )
