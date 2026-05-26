@@ -6,21 +6,21 @@ import { ScrollReveal, StaggerContainer, StaggerItem } from '@/components/animat
 const features = [
   {
     icon: BookOpen,
-    title: 'Adaptive AI Tutor',
+    title: 'Concept clarity',
     description:
-      'Learns how you think. Adapts explanations to match your style. Gets better every session.',
+      'From first principles to exam-level problems. The tutor builds intuition first, then layers in formulas, mechanisms, and shortcuts.',
   },
   {
     icon: Target,
-    title: 'Precision Quizzes',
+    title: 'Doubts cleared anytime',
     description:
-      'AI-generated questions that target exactly where your knowledge has gaps.',
+      'Stuck on a Chemistry mechanism at midnight? Ask. The tutor explains, re-explains, and takes follow-ups until it clicks.',
   },
   {
     icon: TrendingUp,
-    title: 'Visible Progress',
+    title: 'Tracks your weak topics',
     description:
-      'Streaks, mastery levels, and session history that make growth feel real and motivating.',
+      'It remembers which topics give you trouble, then brings them back in quizzes and practice — before they cost you marks.',
   },
 ]
 
@@ -34,7 +34,7 @@ export function FeaturesSection() {
             className="font-serif text-[26px] font-medium mt-3 text-center"
             style={{ color: 'var(--text-primary)' }}
           >
-            Scholarship, made personal.
+            Personal tutoring, exam-focused.
           </h2>
         </ScrollReveal>
 

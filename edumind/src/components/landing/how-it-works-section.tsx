@@ -7,20 +7,20 @@ const steps = [
   {
     num: '01',
     icon: User,
-    title: 'Set up your profile',
-    desc: 'Tell us who you are and what you want to learn.',
+    title: 'Pick your track',
+    desc: 'Tell us if you are prepping for JEE or NEET, and where you are in your prep.',
   },
   {
     num: '02',
     icon: ClipboardList,
-    title: 'Take the quick assessment',
-    desc: '5 minutes to calibrate your AI tutor perfectly.',
+    title: 'Find your weak topics',
+    desc: 'A quick assessment shows where you are confident and where you need more time.',
   },
   {
     num: '03',
     icon: MessageSquare,
-    title: 'Start your first lesson',
-    desc: 'Just type or speak. Your tutor handles the rest.',
+    title: 'Start solving exam-style problems',
+    desc: 'Ask the tutor anything. Get step-by-step explanations and practice questions for your syllabus.',
   },
 ]
 

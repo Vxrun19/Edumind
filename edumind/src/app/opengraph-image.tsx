@@ -29,7 +29,7 @@ export default function Image() {
             marginBottom: 24,
           }}
         >
-          AI-POWERED PERSONAL TUTORING
+          AI TUTOR FOR JEE & NEET
         </div>
         <div
           style={{
@@ -41,7 +41,7 @@ export default function Image() {
             maxWidth: 900,
           }}
         >
-          Learn anything. Actually understand it.
+          Master JEE & NEET concepts. One step at a time.
         </div>
         <div
           style={{

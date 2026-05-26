@@ -16,7 +16,6 @@ import StreakBadge from "@/components/StreakBadge";
 const navLinks = [
   { label: "Dashboard", href: "/dashboard" },
   { label: "Chat", href: "/chat" },
-  { label: "Courses", href: "/courses" },
   { label: "Quiz", href: "/quiz" },
   { label: "Progress", href: "/progress" },
   { label: "Trending", href: "/trending" },

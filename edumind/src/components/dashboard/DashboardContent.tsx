@@ -5,20 +5,13 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import {
   ChevronRight,
-  Calculator,
+  Atom,
   FlaskConical,
-  PenLine,
-  Landmark,
-  Code2,
-  Globe,
-  DollarSign,
-  Leaf,
-  Heart,
-  Palette,
+  Calculator,
+  Dna,
 } from "lucide-react";
 import { CountUp, StaggerContainer, StaggerItem } from "@/components/animations";
 import DashboardUpgradeCard from "@/components/DashboardUpgradeCard";
-import { COURSES } from "@/lib/courses";
 import { SUBJECTS } from "@/lib/subjects";
 import type {
   Conversation,
@@ -52,16 +45,10 @@ export interface DashboardContentProps {
 
 /* ─── Icons for subject grid ─── */
 const subjectIcons: Record<string, React.ComponentType<{ size?: number; style?: React.CSSProperties; className?: string }>> = {
-  Math: Calculator,
-  Science: FlaskConical,
-  English: PenLine,
-  History: Landmark,
-  Coding: Code2,
-  Languages: Globe,
-  Finance: DollarSign,
-  "Life Skills": Leaf,
-  "Health & Fitness": Heart,
-  "Art & Music": Palette,
+  Physics: Atom,
+  Chemistry: FlaskConical,
+  Mathematics: Calculator,
+  Biology: Dna,
 };
 
 /* ─── Sub-components ─── */
@@ -167,12 +154,6 @@ function DashboardRightPanel({
 }) {
   const streakDays = Math.min(currentStreak, 7);
 
-  // Find the most recent course being studied
-  const latestCourse = myCourseProgress[0];
-  const courseInfo = latestCourse
-    ? COURSES.find((c) => c.id === latestCourse.course_id)
-    : null;
-
   return (
     <>
       {/* Streak notes */}
@@ -233,37 +214,6 @@ function DashboardRightPanel({
         )}
       </div>
 
-      {/* Continue course */}
-      {courseInfo && latestCourse && (
-        <>
-          <hr className="ruled-line my-5" />
-          <span className="label-text">CONTINUE</span>
-          <div
-            className="mt-3 p-[14px] rounded-lg"
-            style={{ border: "1px solid var(--border)" }}
-          >
-            <p
-              className="font-sans text-[14px] font-medium"
-              style={{ color: "var(--text-primary)" }}
-            >
-              {courseInfo.title}
-            </p>
-            <p
-              className="font-sans text-[12px]"
-              style={{ color: "var(--text-tertiary)" }}
-            >
-              {`${latestCourse.completed_lessons.length} of ${courseInfo.totalLessons} lessons`}
-            </p>
-            <Link
-              href={`/courses/${courseInfo.id}`}
-              className="font-sans text-[13px] mt-[6px] inline-block"
-              style={{ color: "var(--accent)" }}
-            >
-              {"Resume →"}
-            </Link>
-          </div>
-        </>
-      )}
     </>
   );
 }
@@ -573,7 +523,7 @@ export function DashboardContent({
       <div className="mt-9">
         <span className="label-text">OPEN A SUBJECT</span>
         <hr className="ruled-line mt-2 mb-4" />
-        <div className="grid grid-cols-5 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {SUBJECTS.map((subject) => {
             const Icon = subjectIcons[subject.name];
             return (

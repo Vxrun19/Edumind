@@ -37,7 +37,7 @@ export function LandingNavbar() {
         </span>
 
         <span className="hidden md:block font-sans text-[13px]" style={{ color: 'var(--text-tertiary)' }}>
-          Your personal AI tutor
+          AI tutor for JEE &amp; NEET
         </span>
 
         {/* Desktop auth */}

@@ -8,7 +8,6 @@ import { useSubscription } from '@/hooks/use-subscription'
 import {
   LayoutDashboard,
   MessageSquare,
-  BookOpen,
   FileQuestion,
   BarChart2,
   Clock,
@@ -25,7 +24,6 @@ import { motion, AnimatePresence } from 'framer-motion'
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/chat', label: 'Chat', icon: MessageSquare },
-  { href: '/courses', label: 'Courses', icon: BookOpen },
   { href: '/quiz', label: 'Quiz', icon: FileQuestion },
   { href: '/progress', label: 'Progress', icon: BarChart2 },
   { href: '/history', label: 'History', icon: Clock },
@@ -39,7 +37,6 @@ const pageNumbers: Record<string, string> = {
   '/dashboard': 'Page 02',
   '/chat': 'Page 03',
   '/quiz': 'Page 04',
-  '/courses': 'Page 05',
   '/progress': 'Page 06',
   '/history': 'Page 07',
   '/trending': 'Page 08',

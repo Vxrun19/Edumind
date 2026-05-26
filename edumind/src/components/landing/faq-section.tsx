@@ -7,23 +7,27 @@ import { ScrollReveal } from '@/components/animations'
 const faqs = [
   {
     q: 'Is it really free to start?',
-    a: 'Yes. No credit card required. Free plan includes 20 AI messages per day, 3 quizzes, and 3 full courses. Upgrade anytime if you want more.',
+    a: 'Yes. No credit card required. The free plan includes 20 AI tutor messages per day and 3 quizzes per day, plus access to several full courses. Upgrade anytime if you want more.',
   },
   {
-    q: 'What subjects can I learn?',
-    a: 'Anything. Our AI tutor covers mathematics, sciences, humanities, law, medicine, computer science, languages, and more. If you can ask a question about it, EduMind can teach it.',
+    q: 'Does it cover JEE Advanced as well as JEE Main? And the full NEET syllabus?',
+    a: 'The tutor handles concepts and problems across the JEE (Main and Advanced) and NEET (UG) syllabi for Physics, Chemistry, Mathematics, and Biology. Depth scales with what you ask — a definition gets a clear short answer, a tough mechanics problem gets a worked solution step by step.',
+  },
+  {
+    q: 'Is it aligned to NCERT?',
+    a: 'The tutor treats NCERT as the foundation — since JEE and NEET both build on it — and goes deeper where the exams demand. It will not restrict answers to NCERT-only when a richer explanation actually helps you understand the concept.',
+  },
+  {
+    q: 'Can I ask questions in Hindi or Hinglish?',
+    a: 'Yes. The tutor responds in whichever feels natural to you — English, Hindi, or a mix. Equations and chemical formulas are shown in standard notation either way.',
   },
   {
     q: 'How is this different from ChatGPT?',
-    a: "EduMind is built specifically for learning. It remembers your knowledge gaps, tracks your progress, generates targeted quizzes, and adapts to your learning style over time. ChatGPT just answers questions. EduMind teaches.",
+    a: 'EduMind is built specifically for JEE and NEET prep. It remembers which topics give you trouble, generates practice questions in the exam pattern, and tracks your progress over time. ChatGPT is general-purpose; EduMind is a tutor for your exam.',
   },
   {
     q: 'Can I cancel anytime?',
     a: 'Yes. Cancel with one click, no questions asked. You keep access until the end of your billing period.',
-  },
-  {
-    q: 'Does it work for university-level content?',
-    a: 'Yes. Many of our users are university students, grad students, and professionals. The AI adjusts its depth and complexity to your level automatically.',
   },
 ]
 

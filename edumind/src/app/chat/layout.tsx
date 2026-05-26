@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "AI Chat",
+  title: "AI Tutor Chat",
   description:
-    "Chat with your personal AI tutor. Ask anything, learn everything.",
+    "Step-by-step JEE and NEET tutoring in Physics, Chemistry, Mathematics, and Biology.",
   robots: { index: false, follow: false },
 };
 

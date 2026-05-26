@@ -15,7 +15,7 @@ export function HeroSection() {
           className="font-sans text-[11px] font-semibold uppercase tracking-[0.14em] inline-block"
           style={{ color: 'var(--accent)' }}
         >
-          PRIVATE AI TUTORING
+          AI TUTOR FOR JEE &amp; NEET
         </span>
       </FadeUp>
 
@@ -25,10 +25,10 @@ export function HeroSection() {
           className="font-serif text-[42px] md:text-[60px] font-normal mx-auto mt-5 max-w-[660px]"
           style={{ color: 'var(--text-primary)', letterSpacing: '-0.5px', lineHeight: 1.1 }}
         >
-          Learn anything.
+          Master JEE &amp; NEET concepts.
           <br />
           <span className="relative inline-block">
-            Actually understand it.
+            One step at a time.
             <motion.span
               className="absolute bottom-[2px] left-0 h-[2px] w-full origin-left"
               style={{ background: 'var(--accent)', opacity: 0.5 }}
@@ -46,7 +46,7 @@ export function HeroSection() {
           className="font-serif text-[17px] mx-auto mt-5 max-w-[420px]"
           style={{ color: 'var(--text-secondary)', lineHeight: 1.7 }}
         >
-          Your personal AI tutor that adapts to how you think. Any subject, any pace, no judgment.
+          An AI tutor that breaks down Physics, Chemistry, Mathematics, and Biology &mdash; step-by-step, available 24/7. Two tracks: JEE (PCM) or NEET (PCB).
         </p>
       </FadeUp>
 
@@ -67,30 +67,6 @@ export function HeroSection() {
           >
             See how it works
           </a>
-        </div>
-      </FadeUp>
-
-      {/* Trust line */}
-      <FadeUp delay={0.45}>
-        <div className="flex items-center justify-center mt-4 gap-2">
-          <div className="flex -space-x-2">
-            {[
-              'linear-gradient(135deg, #C9A96E, #8B7038)',
-              'linear-gradient(135deg, #A6836B, #7C5C4A)',
-              'linear-gradient(135deg, #D4B896, #A88E6C)',
-              'linear-gradient(135deg, #B8956C, #8D6B42)',
-              'linear-gradient(135deg, #C2A878, #967C4E)',
-            ].map((bg, i) => (
-              <div
-                key={i}
-                className="w-6 h-6 rounded-full border-2"
-                style={{ background: bg, borderColor: 'var(--bg-base)' }}
-              />
-            ))}
-          </div>
-          <span className="font-sans text-[13px] ml-2" style={{ color: 'var(--text-tertiary)' }}>
-            Trusted by 12,000+ learners
-          </span>
         </div>
       </FadeUp>
 
@@ -130,7 +106,7 @@ export function HeroSection() {
                 style={{ background: 'var(--accent-light, rgba(74,124,89,0.08))' }}
               >
                 <p className="font-sans text-[14px]" style={{ color: 'var(--text-primary)' }}>
-                  Explain quantum entanglement like I&apos;m 17
+                  Explain projectile motion step-by-step for JEE
                 </p>
               </div>
             </div>
@@ -144,9 +120,10 @@ export function HeroSection() {
                   className="font-serif text-[14px]"
                   style={{ color: 'var(--text-primary)', lineHeight: 1.7 }}
                 >
-                  Imagine you have two coins that are magically linked. When you flip one and it
-                  lands heads, the other instantly lands tails &mdash; no matter how far apart they
-                  are. Even if one coin is in Toronto and the other is on Mars...
+                  Picture a cricket ball thrown at an angle. Its motion has two independent parts
+                  &mdash; horizontal velocity stays constant (no force acts horizontally), and
+                  vertical velocity changes because of gravity. Most JEE projectile problems come
+                  down to handling those two axes separately...
                 </p>
               </div>
             </div>

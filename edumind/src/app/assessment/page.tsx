@@ -88,15 +88,16 @@ const REASONING_QUESTIONS = [
   },
 ];
 
+// JEE (PCM) + NEET (PCB). Physics and Chemistry are shared between both
+// tracks; Mathematics is JEE-only; Biology is NEET-only. We surface all four
+// during onboarding — a student can rate Mathematics or Biology low if it
+// isn't part of their track. The tutor infers the track from the subject
+// confidences and from the questions the student asks.
 const ASSESSMENT_SUBJECTS = [
-  "Math",
-  "Science",
-  "English/Writing",
-  "History",
-  "Coding/Tech",
-  "Business/Finance",
-  "Languages",
-  "Creative Arts",
+  "Physics",
+  "Chemistry",
+  "Mathematics",
+  "Biology",
 ];
 
 const GOAL_REASONS = [

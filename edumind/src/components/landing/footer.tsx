@@ -12,7 +12,7 @@ export function Footer() {
               EduMind
             </span>
             <p className="font-sans text-[13px] mt-1" style={{ color: 'var(--text-tertiary)' }}>
-              Your personal AI tutor.
+              AI tutor for JEE &amp; NEET aspirants.
             </p>
           </div>
           <nav className="flex items-center gap-6">

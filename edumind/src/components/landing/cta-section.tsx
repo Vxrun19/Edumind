@@ -25,7 +25,7 @@ export function CTASection() {
             className="font-serif text-[30px] font-normal"
             style={{ color: 'var(--text-primary)' }}
           >
-            Your learning journey starts here.
+            Start your JEE or NEET prep today.
           </h2>
           <p
             className="font-serif text-[16px] mt-3"
@@ -40,12 +40,6 @@ export function CTASection() {
           >
             {'Open your notebook \u2192'}
           </Link>
-          <p
-            className="font-sans text-[13px] mt-3"
-            style={{ color: 'var(--text-tertiary)' }}
-          >
-            Join 12,000+ scholars already inside
-          </p>
         </div>
       </ScrollReveal>
     </section>
