@@ -4,83 +4,148 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  /* EduMind — Warm Paper Notebook Design System */
+  /* ============================================================
+   *  EduMind — Premium Light + Violet/Blue Gradient design system
+   * ============================================================
+   *  Light, modern, slightly cool base. The brand signature is a
+   *  violet→blue gradient used disciplined-ly (CTAs, key accents,
+   *  selective backgrounds) — not slathered across everything.
+   * ------------------------------------------------------------ */
 
-  /* Backgrounds — warm paper tones */
-  --bg-base: #F9F7F3;
-  --bg-surface: #FFFFFF;
-  --bg-muted: #F3F1EC;
-  --bg-warm: #FBF9F5;
-  --bg-annotation: #FEFCF7;
+  /* ─── Surfaces ───────────────────────────────────────────────
+   *  Near-white with a faint cool tint — has subtle depth against
+   *  pure white card surfaces sitting on top.
+   */
+  --bg-base:    #F8F9FE;  /* Page background — near-white, faintly cool */
+  --bg-surface: #FFFFFF;  /* Cards, panels, elevated surfaces (pure white) */
+  --bg-muted:   #F1F3FB;  /* Slightly more saturated muted fills / sidebar etc. */
+  --bg-subtle:  #FAFBFE;  /* Just-barely-different — alternating sections */
 
-  /* ONE action color only */
-  --accent: #7C5C2E;
-  --accent-light: #F5EDD8;
-  --accent-hover: #5E4520;
-  --accent-subtle: rgba(124, 92, 46, 0.08);
+  /* Kept for backwards-compat with sections we haven't rebuilt yet.
+   * As we rebuild section by section these references are dropped. */
+  --bg-warm:       var(--bg-subtle);
+  --bg-annotation: var(--bg-subtle);
 
-  /* Borders — like pencil lines */
-  --border: #E5E1D8;
-  --border-strong: #CCC8BE;
-  --border-accent: #7C5C2E;
+  /* ─── Brand gradient stops ──────────────────────────────────
+   *  Vibrant but not overly saturated. Hue transition (~245° → ~217°)
+   *  passes through clean indigo for a smooth ramp.
+   */
+  --violet:        #6D5EF6;  /* Brand violet — confident, slightly warm */
+  --blue:          #3B82F6;  /* Brand blue — royal, clean */
+  --violet-light:  #8E7BFF;  /* Soft violet for glow gradients */
+  --blue-light:    #6BA5FF;  /* Soft blue for glow gradients */
+  --violet-deep:   #5946E0;  /* Darker violet — hover states, dark-bg text */
 
-  /* Text — ink tones */
-  --text-primary: #1A1714;
-  --text-secondary: #5C5750;
-  --text-tertiary: #9E9890;
+  /* ─── Reusable gradient assemblies ──────────────────────────
+   *  Use these as `background: var(--gradient-...)`.
+   *  --gradient-primary: the brand workhorse (CTAs, accent fills)
+   *  --gradient-glow:    softer 3-stop for hero atmospheres
+   *  --gradient-soft:    8% opacity wash for backgrounds
+   *  --gradient-radial:  radial-gradient for hero light-source effect
+   */
+  --gradient-primary: linear-gradient(135deg, var(--violet) 0%, var(--blue) 100%);
+  --gradient-glow:    linear-gradient(135deg, var(--violet-light) 0%, var(--violet) 50%, var(--blue) 100%);
+  --gradient-soft:    linear-gradient(135deg, rgba(109, 94, 246, 0.08) 0%, rgba(59, 130, 246, 0.08) 100%);
+  --gradient-radial:  radial-gradient(ellipse 80% 60% at 50% 0%, rgba(109, 94, 246, 0.18), transparent 70%);
 
-  /* Semantic */
-  --success: #2D6B4A;
-  --success-bg: #EBF5EF;
-  --error: #8B2020;
-  --error-bg: #FCEAEA;
+  /* ─── Single-color accents (when gradient inappropriate) ───
+   *  For focus rings, icon colors, single-color buttons, dividers.
+   */
+  --accent:        var(--violet);
+  --accent-light:  #EEEBFF;  /* Soft violet wash — hover backgrounds */
+  --accent-hover:  var(--violet-deep);
+  --accent-subtle: rgba(109, 94, 246, 0.08);
 
-  /* Spacing system */
+  /* Kept name for backwards-compat with sections we haven't rebuilt yet. */
+  --border-accent: var(--accent);
+
+  /* ─── Text — cool slate tones ────────────────────────────────
+   *  Harmonize with violet/blue palette. Cool-leaning slate
+   *  rather than warm sepia.
+   */
+  --text-primary:   #0F172A;  /* Deep slate — near-black, cool undertone */
+  --text-secondary: #475569;  /* Mid slate */
+  --text-tertiary:  #94A3B8;  /* Light slate */
+  --text-inverted:  #FFFFFF;  /* For text on dark backgrounds */
+
+  /* ─── Borders — soft cool grays ──────────────────────────────*/
+  --border:        #E2E8F0;  /* Default border — slate-200 territory */
+  --border-strong: #CBD5E1;  /* Stronger border — slate-300 */
+
+  /* ─── Shadows — layered, modern elevation ────────────────────
+   *  Each level is a stack of two shadows: a tight close one and
+   *  a soft far one. Gives real depth without the harsh single drop
+   *  that screams "drop-shadow filter".
+   */
+  --shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.04);
+  --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(15, 23, 42, 0.04);
+  --shadow-md: 0 4px 12px rgba(15, 23, 42, 0.06), 0 2px 4px rgba(15, 23, 42, 0.04);
+  --shadow-lg: 0 12px 32px rgba(15, 23, 42, 0.08), 0 4px 8px rgba(15, 23, 42, 0.04);
+  --shadow-xl: 0 24px 64px rgba(15, 23, 42, 0.10), 0 8px 16px rgba(15, 23, 42, 0.05);
+  --shadow-glow: 0 8px 32px rgba(109, 94, 246, 0.28), 0 2px 8px rgba(109, 94, 246, 0.16);
+
+  /* Kept old name for backwards-compat with notebook-panel + dashboard cards. */
+  --shadow-page: var(--shadow-md);
+
+  /* ─── Semantic ──────────────────────────────────────────────*/
+  --success:    #10B981;
+  --success-bg: #ECFDF5;
+  --error:      #EF4444;
+  --error-bg:   #FEF2F2;
+  --warning:    #F59E0B;  /* Matches the past-due banner amber */
+  --warning-bg: #FEF3C7;
+
+  /* ─── Spacing scale (unchanged from prior system) ────────────*/
   --space-xs: 8px;
   --space-sm: 16px;
   --space-md: 24px;
   --space-lg: 40px;
   --space-xl: 64px;
+  --space-2xl: 96px;
 
-  /* No radius on main panels — notebooks are flat */
-  --radius-panel: 4px;
-  --radius-button: 8px;
-  --radius-pill: 999px;
+  /* ─── Radii — slightly more modern than the flat paper system ─
+   *  Cards round more comfortably; pills stay pill-shaped.
+   */
+  --radius-sm:    6px;
+  --radius-md:    10px;
+  --radius-lg:    14px;
+  --radius-xl:    20px;
+  --radius-2xl:   28px;
+  --radius-pill:  999px;
 
-  /* Shadows — paper-like, not floating */
-  --shadow-sm: 0 1px 3px rgba(26, 23, 20, 0.06);
-  --shadow-md: 0 3px 12px rgba(26, 23, 20, 0.08);
-  --shadow-page: 2px 2px 12px rgba(26, 23, 20, 0.06), -2px 0 8px rgba(26, 23, 20, 0.04);
+  /* Kept old names for backwards-compat. */
+  --radius-panel:  var(--radius-md);
+  --radius-button: var(--radius-md);
+  --radius:        var(--radius-md);
 
-  /* Shadcn compatibility tokens */
-  --background: #F9F7F3;
-  --foreground: #1A1714;
-  --card: #FFFFFF;
-  --card-foreground: #1A1714;
-  --popover: #FFFFFF;
-  --popover-foreground: #1A1714;
-  --primary: #7C5C2E;
+  /* ─── Shadcn compatibility tokens (re-mapped to new world) ──*/
+  --background: var(--bg-base);
+  --foreground: var(--text-primary);
+  --card: var(--bg-surface);
+  --card-foreground: var(--text-primary);
+  --popover: var(--bg-surface);
+  --popover-foreground: var(--text-primary);
+  --primary: var(--violet);
   --primary-foreground: #FFFFFF;
-  --secondary: #F3F1EC;
-  --secondary-foreground: #5C5750;
-  --muted: #F3F1EC;
-  --muted-foreground: #9E9890;
-  --accent-shadcn: #F5EDD8;
-  --accent-foreground: #7C5C2E;
-  --destructive: #8B2020;
+  --secondary: var(--bg-muted);
+  --secondary-foreground: var(--text-secondary);
+  --muted: var(--bg-muted);
+  --muted-foreground: var(--text-tertiary);
+  --accent-shadcn: var(--accent-light);
+  --accent-foreground: var(--violet);
+  --destructive: var(--error);
   --destructive-foreground: #FFFFFF;
-  --input: #E5E1D8;
-  --ring: #7C5C2E;
-  --radius: 0.5rem;
+  --input: var(--border);
+  --ring: var(--violet);
 
-  --sidebar: #FBF9F5;
-  --sidebar-foreground: #1A1714;
-  --sidebar-primary: #7C5C2E;
+  --sidebar: var(--bg-muted);
+  --sidebar-foreground: var(--text-primary);
+  --sidebar-primary: var(--violet);
   --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent: #F5EDD8;
-  --sidebar-accent-foreground: #7C5C2E;
-  --sidebar-border: #E5E1D8;
-  --sidebar-ring: #7C5C2E;
+  --sidebar-accent: var(--accent-light);
+  --sidebar-accent-foreground: var(--violet);
+  --sidebar-border: var(--border);
+  --sidebar-ring: var(--violet);
 }
 
 @theme inline {
@@ -127,15 +192,99 @@
   body {
     background: var(--bg-base);
     color: var(--text-primary);
-    font-family: var(--font-serif);
+    font-family: var(--font-sans);
   }
 }
 
-/* Notebook signature elements */
+/* ─── Brand utilities ───────────────────────────────────────── */
+
+/* Apply the brand gradient as text fill. */
+.gradient-text {
+  background: var(--gradient-primary);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Apply the brand gradient as background. */
+.gradient-bg {
+  background: var(--gradient-primary);
+}
+
+/* Soft 8%-opacity gradient wash — for atmospheric backgrounds. */
+.gradient-soft-bg {
+  background: var(--gradient-soft);
+}
+
+/* General-purpose card surface — the violet/blue-era counterpart to
+ * .notebook-panel (which has a left-accent stripe and paper feel).
+ * Use .panel for clean cards, .notebook-panel for legacy paper cards. */
+.panel {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+}
+
+/* Shorter alias of .label-text — same uppercase tracked label style.
+ * Both exist for backwards-compat; prefer .label in new code. */
+.label {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--text-tertiary);
+}
+
+/* Primary CTA button. Pair with white text. */
+.btn-primary {
+  background: var(--gradient-primary);
+  color: var(--text-inverted);
+  border-radius: var(--radius-lg);
+  padding: 12px 24px;
+  font-weight: 600;
+  font-family: var(--font-sans);
+  font-size: 15px;
+  box-shadow: var(--shadow-glow);
+  transition: transform 200ms ease, box-shadow 200ms ease;
+  cursor: pointer;
+  border: none;
+}
+.btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 40px rgba(109, 94, 246, 0.32), 0 4px 12px rgba(109, 94, 246, 0.2);
+}
+.btn-primary:active {
+  transform: scale(0.97);
+}
+
+/* Secondary outlined button. */
+.btn-secondary {
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  padding: 11px 23px;
+  font-weight: 500;
+  font-family: var(--font-sans);
+  font-size: 15px;
+  transition: border-color 200ms ease, background 200ms ease;
+  cursor: pointer;
+}
+.btn-secondary:hover {
+  border-color: var(--violet);
+  background: var(--accent-light);
+}
+
+/* ─── Legacy notebook utilities (kept until each section is rebuilt) ─
+ *  These reference the new tokens so colors stay consistent during the
+ *  in-between state. They'll be removed as we rebuild sections.
+ */
 .notebook-panel {
   background: var(--bg-surface);
   border: 1px solid var(--border);
-  border-radius: var(--radius-panel);
+  border-radius: var(--radius-md);
   border-left: 2px solid var(--border-accent);
   box-shadow: var(--shadow-page);
 }
@@ -163,30 +312,12 @@
   color: var(--text-tertiary);
 }
 
-/* General-purpose card surface — clean alternative to .notebook-panel
- * (which has a left-accent stripe). Used by the quiz page. */
-.panel {
-  background: var(--bg-surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-button);
-}
-
-/* Shorter alias of .label-text — same uppercase tracked label style. */
-.label {
-  font-family: var(--font-sans);
-  font-size: 11px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  color: var(--text-tertiary);
-}
-
 .typewriter-input {
   width: 100%;
   border: none;
   border-bottom: 2px solid var(--border-strong);
   background: transparent;
-  font-family: var(--font-serif);
+  font-family: var(--font-sans);
   font-size: 16px;
   color: var(--text-primary);
   padding: 8px 0;
@@ -201,17 +332,29 @@
   color: var(--text-tertiary);
 }
 
-/* Scrollbar styling */
+/* Scrollbar styling — refined for cool palette */
 ::-webkit-scrollbar {
-  width: 6px;
+  width: 8px;
 }
 ::-webkit-scrollbar-track {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
   background: var(--border-strong);
-  border-radius: 3px;
+  border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
   background: var(--text-tertiary);
+}
+
+/* Respect prefers-reduced-motion globally — pages that opt out can override. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
