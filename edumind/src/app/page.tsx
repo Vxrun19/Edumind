@@ -1,7 +1,7 @@
 import { LandingNavbar } from '@/components/landing/landing-navbar'
 import { HeroSection } from '@/components/landing/hero-section'
 import { SubjectsStrip } from '@/components/landing/subjects-strip'
-import { FeaturesSection } from '@/components/landing/features-section'
+import { ProductPreviewSection } from '@/components/landing/product-preview-section'
 import { HowItWorksSection } from '@/components/landing/how-it-works-section'
 import { TestimonialsSection } from '@/components/landing/testimonials-section'
 import { PricingPreviewSection } from '@/components/landing/pricing-preview-section'
@@ -15,7 +15,7 @@ export default function LandingPage() {
       <LandingNavbar />
       <HeroSection />
       <SubjectsStrip />
-      <FeaturesSection />
+      <ProductPreviewSection />
       <HowItWorksSection />
       <TestimonialsSection />
       <PricingPreviewSection />
