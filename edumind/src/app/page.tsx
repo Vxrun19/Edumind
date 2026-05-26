@@ -1,5 +1,6 @@
 import { LandingNavbar } from '@/components/landing/landing-navbar'
 import { HeroSection } from '@/components/landing/hero-section'
+import { SubjectsStrip } from '@/components/landing/subjects-strip'
 import { FeaturesSection } from '@/components/landing/features-section'
 import { HowItWorksSection } from '@/components/landing/how-it-works-section'
 import { TestimonialsSection } from '@/components/landing/testimonials-section'
@@ -13,6 +14,7 @@ export default function LandingPage() {
     <main style={{ background: 'var(--bg-base)' }}>
       <LandingNavbar />
       <HeroSection />
+      <SubjectsStrip />
       <FeaturesSection />
       <HowItWorksSection />
       <TestimonialsSection />
