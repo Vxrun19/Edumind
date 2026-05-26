@@ -1,40 +1,56 @@
-"use client";
+'use client'
 
-import Link from "next/link";
-import { useSubscription } from "@/hooks/use-subscription";
+import Link from 'next/link'
+import { useSubscription } from '@/hooks/use-subscription'
 
+// Small upgrade prompt that renders only for free users. Subtle
+// brand-violet left accent stripe + clean panel surface. Tabular-nums
+// on the price so "₹399" stays cleanly aligned across re-renders.
 export default function DashboardUpgradeCard() {
-  const { isPro, isLoading } = useSubscription();
+  const { isPro, isLoading } = useSubscription()
 
-  if (isLoading || isPro) return null;
+  if (isLoading || isPro) return null
 
   return (
     <div
-      className="notebook-panel rounded-2xl p-5 mb-6"
+      className="p-6"
       style={{
-        background: "var(--bg-surface)",
-        border: "1px solid var(--border)",
-        borderLeft: "3px solid var(--accent)",
+        background: 'var(--bg-surface)',
+        border: '1px solid var(--border)',
+        borderLeft: '3px solid var(--accent)',
+        borderRadius: 'var(--radius-xl)',
+        boxShadow: 'var(--shadow-xs)',
       }}
     >
-      <div className="flex items-start gap-3">
-        <span className="text-lg">✦</span>
-        <div className="flex-1">
-          <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-1">
-            Upgrade to Pro
-          </h3>
-          <p className="text-xs text-[var(--text-tertiary)] mb-3 leading-relaxed">
-            Unlock unlimited chats, voice mode and full personalization.
-          </p>
-          <Link
-            href="/pricing"
-            className="text-xs font-semibold transition-all hover:opacity-80"
-            style={{ color: "var(--accent)" }}
-          >
-            ₹399/month &rarr; See plans
-          </Link>
-        </div>
-      </div>
+      <span className="label">Upgrade</span>
+      <h3
+        className="font-serif font-normal mt-2"
+        style={{
+          color: 'var(--text-primary)',
+          fontSize: 18,
+          lineHeight: 1.3,
+          letterSpacing: '-0.005em',
+        }}
+      >
+        Upgrade to Pro
+      </h3>
+      <p
+        className="font-sans text-[13px] mt-2"
+        style={{ color: 'var(--text-secondary)', lineHeight: 1.5 }}
+      >
+        Unlock unlimited chats, voice mode, and full personalization from
+        your assessment.
+      </p>
+      <Link
+        href="/pricing"
+        className="inline-block font-sans text-[13px] font-semibold mt-4 transition-opacity duration-200 hover:opacity-80"
+        style={{
+          color: 'var(--accent)',
+          fontVariantNumeric: 'tabular-nums',
+        }}
+      >
+        ₹399/month → See plans
+      </Link>
     </div>
-  );
+  )
 }

@@ -1,8 +1,17 @@
 import { redirect } from "next/navigation";
 import { auth } from "@clerk/nextjs/server";
 import { supabaseAdmin as supabase } from "@/lib/supabaseAdmin";
-import type { Conversation, UserStreak, StudentProfile, Quiz, TrendingTopic, LearningAssessment, CourseProgress } from "@/lib/supabase";
-import { DashboardContent, DashboardRightPanelWrapper } from "@/components/dashboard/DashboardContent";
+import type {
+  Conversation,
+  UserStreak,
+  StudentProfile,
+  Quiz,
+  TrendingTopic,
+} from "@/lib/supabase";
+import {
+  DashboardContent,
+  DashboardRightPanelWrapper,
+} from "@/components/dashboard/DashboardContent";
 import AcademicLayout from "@/components/AcademicLayout";
 
 interface Suggestion {
@@ -14,18 +23,27 @@ interface Suggestion {
 export default async function DashboardPage() {
   const { userId } = await auth();
 
-  // Fetch profile, recent conversations, streak, and suggestions
   let recentConversations: Conversation[] = [];
   let streakData: UserStreak | null = null;
   let profile: StudentProfile | null = null;
   let suggestions: Suggestion[] = [];
   let recentQuizzes: (Quiz & { best_score?: number })[] = [];
   let trendingTopics: TrendingTopic[] = [];
-  let assessment: LearningAssessment | null = null;
-  let myCourseProgress: CourseProgress[] = [];
 
   if (userId) {
-    const [convosRes, streakRes, profileRes, quizzesRes, trendingRes, assessmentRes, courseProgressRes] = await Promise.all([
+    // Single Promise.all for the dashboard's data dependencies. Dropped:
+    // - assessment fetch (was passed through to DashboardContent but
+    //   never rendered there)
+    // - course_progress fetch (was driving the CircularProgress widget
+    //   that referenced now-hidden courses — both the data flow and
+    //   the widget have been removed)
+    const [
+      convosRes,
+      streakRes,
+      profileRes,
+      quizzesRes,
+      trendingRes,
+    ] = await Promise.all([
       supabase
         .from("conversations")
         .select("*")
@@ -54,28 +72,17 @@ export default async function DashboardPage() {
         .order("generated_at", { ascending: false })
         .limit(1)
         .single(),
-      supabase
-        .from("assessments")
-        .select("*")
-        .eq("user_id", userId)
-        .single(),
-      supabase
-        .from("course_progress")
-        .select("*")
-        .eq("user_id", userId)
-        .order("last_accessed", { ascending: false })
-        .limit(4),
     ]);
+
     recentConversations = (convosRes.data as Conversation[]) ?? [];
-    assessment = (assessmentRes.data as LearningAssessment) ?? null;
     streakData = (streakRes.data as UserStreak) ?? null;
     profile = (profileRes.data as StudentProfile) ?? null;
-    myCourseProgress = (courseProgressRes.data as CourseProgress[]) ?? [];
     if (trendingRes.data?.topics) {
       trendingTopics = (trendingRes.data.topics as TrendingTopic[]).slice(0, 4);
     }
 
-    // Fetch best scores for recent quizzes
+    // Best scores for the 3 most recent quizzes — feeds the "Recommended
+    // Next" weak-quiz fallback in DashboardContent.
     const quizList = (quizzesRes.data as Quiz[]) ?? [];
     if (quizList.length > 0) {
       const { data: attempts } = await supabase
@@ -87,14 +94,16 @@ export default async function DashboardPage() {
         const qAttempts = (attempts ?? []).filter((a) => a.quiz_id === q.id);
         return {
           ...q,
-          best_score: qAttempts.length > 0
-            ? Math.max(...qAttempts.map((a) => a.percentage))
-            : undefined,
+          best_score:
+            qAttempts.length > 0
+              ? Math.max(...qAttempts.map((a) => a.percentage))
+              : undefined,
         };
       });
     }
 
-    // Fetch next-topic suggestions from recent conversations
+    // Next-topic suggestions from recent conversations with stored
+    // next_topics — drives the right panel "Suggested next" list.
     const { data: suggestConvos } = await supabase
       .from("conversations")
       .select("subject, title, next_topics")
@@ -120,7 +129,7 @@ export default async function DashboardPage() {
     }
   }
 
-  // Redirect to onboarding if no profile exists
+  // Redirect new users to onboarding before showing the dashboard.
   if (!profile) {
     redirect("/onboarding");
   }
@@ -128,7 +137,6 @@ export default async function DashboardPage() {
   const currentStreak = streakData?.current_streak ?? 0;
   const displayName = profile.display_name || "learner";
 
-  // Time-based greeting
   const hour = new Date().getHours();
   const timeGreeting =
     hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
@@ -139,21 +147,16 @@ export default async function DashboardPage() {
         <DashboardRightPanelWrapper
           currentStreak={currentStreak}
           suggestions={suggestions}
-          myCourseProgress={myCourseProgress}
         />
       }
     >
       <DashboardContent
         timeGreeting={timeGreeting}
         displayName={displayName}
-        profile={profile}
         currentStreak={currentStreak}
-        assessment={assessment}
         recentConversations={recentConversations}
         recentQuizzes={recentQuizzes}
         trendingTopics={trendingTopics}
-        suggestions={suggestions}
-        myCourseProgress={myCourseProgress}
       />
     </AcademicLayout>
   );
