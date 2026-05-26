@@ -20,6 +20,7 @@ import {
   ChevronRight,
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { PastDueBanner } from '@/components/PastDueBanner'
 
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -139,6 +140,8 @@ export function AcademicLayout({ children, rightPanel, pageNumber }: AcademicLay
           )}
         </div>
       </header>
+
+      <PastDueBanner />
 
       <div className="flex">
         {/* LEFT SIDEBAR — Desktop */}
