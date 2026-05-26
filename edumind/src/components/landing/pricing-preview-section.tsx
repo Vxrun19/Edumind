@@ -34,7 +34,7 @@ export function PricingPreviewSection() {
           </div>
         </ScrollReveal>
 
-        <StaggerContainer className="grid md:grid-cols-2 gap-5 mt-10" staggerDelay={0.07}>
+        <StaggerContainer className="grid md:grid-cols-2 gap-5 mt-10" stagger={0.07}>
           {/* Free */}
           <StaggerItem>
             <div className="notebook-panel p-7 h-full flex flex-col">

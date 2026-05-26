@@ -482,7 +482,7 @@ export function DashboardContent({
         <div className="mt-9">
           <span className="label-text">RECENT SESSIONS</span>
           <hr className="ruled-line mt-2" />
-          <StaggerContainer staggerDelay={0.06}>
+          <StaggerContainer stagger={0.06}>
             {recentConversations.map((convo) => (
               <StaggerItem key={convo.id}>
                 <Link

@@ -38,7 +38,7 @@ export function TestimonialsSection() {
           </h2>
         </div>
 
-        <StaggerContainer className="grid md:grid-cols-3 gap-5 mt-10" staggerDelay={0.07}>
+        <StaggerContainer className="grid md:grid-cols-3 gap-5 mt-10" stagger={0.07}>
           {reasons.map((reason) => (
             <StaggerItem key={reason.title}>
               <div

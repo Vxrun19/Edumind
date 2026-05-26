@@ -38,7 +38,7 @@ export function FeaturesSection() {
           </h2>
         </ScrollReveal>
 
-        <StaggerContainer className="grid md:grid-cols-3 gap-5 mt-10" staggerDelay={0.07}>
+        <StaggerContainer className="grid md:grid-cols-3 gap-5 mt-10" stagger={0.07}>
           {features.map((feature) => (
             <StaggerItem key={feature.title}>
               <div

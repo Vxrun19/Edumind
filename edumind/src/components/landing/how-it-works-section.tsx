@@ -40,7 +40,7 @@ export function HowItWorksSection() {
           {"Three steps. That's it."}
         </h2>
 
-        <StaggerContainer className="grid md:grid-cols-3 gap-8 mt-12 relative" staggerDelay={0.1}>
+        <StaggerContainer className="grid md:grid-cols-3 gap-8 mt-12 relative" stagger={0.1}>
           {steps.map((step, i) => (
             <StaggerItem key={step.num}>
               <div className="flex flex-col items-center text-center relative">
