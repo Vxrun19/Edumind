@@ -12,6 +12,25 @@ import {
   Suspense,
 } from "react";
 import { motion } from "framer-motion";
+import {
+  Menu,
+  X,
+  Plus,
+  Atom,
+  FlaskConical,
+  Calculator,
+  Dna,
+  Mic,
+  Volume2,
+  VolumeX,
+  Square,
+  FileQuestion,
+  RefreshCw,
+  Loader2,
+  ArrowLeft,
+  ArrowUp,
+  type LucideIcon,
+} from "lucide-react";
 import { SUBJECTS } from "@/lib/subjects";
 import { useVoice } from "@/hooks/use-voice";
 import VoiceIndicator from "@/components/VoiceIndicator";
@@ -28,6 +47,25 @@ interface ChatMessage {
 
 const MOTION_EASE: [number, number, number, number] = [0.22, 1, 0.36, 1];
 const MOTION_TRANSITION = { duration: 0.2, ease: MOTION_EASE };
+
+// Lucide icon for each canonical subject. Replaces the old emoji
+// indicators in the sidebar list and top-bar subject label.
+const SUBJECT_ICONS: Record<string, LucideIcon> = {
+  Physics: Atom,
+  Chemistry: FlaskConical,
+  Mathematics: Calculator,
+  Biology: Dna,
+};
+
+// JEE/NEET starter prompts for the empty state. One per subject pillar
+// (P/C/B/M) so the affordance covers all four tracks. Clicking a chip
+// pre-fills the input — no new logic, just calls setInput + focuses.
+const STARTER_PROMPTS: ReadonlyArray<string> = [
+  "Explain projectile motion",
+  "Difference between SN1 and SN2 reactions",
+  "Mitosis vs meiosis",
+  "How do I integrate by parts?",
+];
 
 // ─── helpers ────────────────────────────────────────────
 async function createConversation(
@@ -124,88 +162,227 @@ async function generateSuggestions(
   }
 }
 
-// ─── SVG Icons ──────────────────────────────────────────
-function MicIcon({ className = "" }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      width="20"
-      height="20"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />
-      <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
-      <line x1="12" x2="12" y1="19" y2="22" />
-    </svg>
-  );
+// ─── Markdown rendering ────────────────────────────────
+// The tutor responds in markdown (bold, lists, inline code, code blocks).
+// The original chat page rendered msg.content as plain text — markdown
+// syntax leaked into the UI as literal asterisks/backticks. Fixed by
+// parsing tutor messages here. User messages stay plain text — humans
+// don't type markdown.
+//
+// Custom parser rather than a dependency (react-markdown / remark) for
+// consistency with the existing Knowledge Canvas regex approach in this
+// file. Covers the tutor's actual output: paragraphs, **bold**, *italic*,
+// `inline code`, ```code blocks```, 1. numbered lists, - bulleted lists.
+
+type MdBlock =
+  | { type: "code"; content: string }
+  | { type: "ol"; items: string[] }
+  | { type: "ul"; items: string[] }
+  | { type: "p"; content: string };
+
+function parseBlocks(text: string): MdBlock[] {
+  const blocks: MdBlock[] = [];
+  const lines = text.split("\n");
+  let i = 0;
+
+  while (i < lines.length) {
+    const line = lines[i];
+
+    // Fenced code block: ```...```
+    if (line.startsWith("```")) {
+      const body: string[] = [];
+      i++;
+      while (i < lines.length && !lines[i].startsWith("```")) {
+        body.push(lines[i]);
+        i++;
+      }
+      i++; // skip closing fence (or EOF)
+      blocks.push({ type: "code", content: body.join("\n") });
+      continue;
+    }
+
+    // Numbered list: a contiguous run of lines starting "1. " "2. " etc.
+    if (/^\s*\d+\.\s/.test(line)) {
+      const items: string[] = [];
+      while (i < lines.length && /^\s*\d+\.\s/.test(lines[i])) {
+        items.push(lines[i].replace(/^\s*\d+\.\s+/, ""));
+        i++;
+      }
+      blocks.push({ type: "ol", items });
+      continue;
+    }
+
+    // Bulleted list: lines starting "- " or "* " (but NOT "**" which is
+    // bold). The "* " followed by space is the disambiguating signal.
+    if (/^\s*-\s/.test(line) || /^\s*\*\s/.test(line)) {
+      const items: string[] = [];
+      while (
+        i < lines.length &&
+        (/^\s*-\s/.test(lines[i]) || /^\s*\*\s/.test(lines[i]))
+      ) {
+        items.push(lines[i].replace(/^\s*[-*]\s+/, ""));
+        i++;
+      }
+      blocks.push({ type: "ul", items });
+      continue;
+    }
+
+    // Blank line — paragraph separator
+    if (line.trim() === "") {
+      i++;
+      continue;
+    }
+
+    // Paragraph: gather contiguous non-blank lines that aren't a list
+    // or code fence start.
+    const paraLines: string[] = [];
+    while (
+      i < lines.length &&
+      lines[i].trim() !== "" &&
+      !lines[i].startsWith("```") &&
+      !/^\s*\d+\.\s/.test(lines[i]) &&
+      !/^\s*-\s/.test(lines[i]) &&
+      !/^\s*\*\s/.test(lines[i])
+    ) {
+      paraLines.push(lines[i]);
+      i++;
+    }
+    if (paraLines.length > 0) {
+      blocks.push({ type: "p", content: paraLines.join("\n") });
+    }
+  }
+
+  return blocks;
 }
 
-function SpeakerOnIcon({ className = "" }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      width="16"
-      height="16"
-      viewBox="0 0 24 24"
-      fill="currentColor"
-      stroke="currentColor"
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
-      <path
-        d="M15.54 8.46a5 5 0 0 1 0 7.07"
-        fill="none"
-        strokeWidth="2"
-      />
-      <path
-        d="M19.07 4.93a10 10 0 0 1 0 14.14"
-        fill="none"
-        strokeWidth="2"
-      />
-    </svg>
-  );
+// Render inline formatting within a chunk of text: **bold**, *italic*,
+// `inline code`. Multi-pass via a single combined regex.
+function renderInline(text: string, keyBase: string): React.ReactNode[] {
+  // Order: inline code first (so backticks aren't disturbed by bold/italic),
+  // then bold (must come before italic because ** would otherwise be
+  // greedily matched as italic-italic).
+  // Restricted to single line ([^*\n]+) to avoid runaway matches.
+  const regex = /(`([^`]+)`)|(\*\*([^*\n]+)\*\*)|(\*([^*\n]+)\*)/g;
+  const parts: React.ReactNode[] = [];
+  let lastIdx = 0;
+  let key = 0;
+  let match: RegExpExecArray | null;
+
+  while ((match = regex.exec(text)) !== null) {
+    if (match.index > lastIdx) {
+      parts.push(text.slice(lastIdx, match.index));
+    }
+    if (match[1]) {
+      // `inline code`
+      parts.push(
+        <code
+          key={`${keyBase}-${key++}`}
+          className="font-mono"
+          style={{
+            background: "var(--bg-muted)",
+            color: "var(--text-primary)",
+            padding: "1px 6px",
+            borderRadius: "var(--radius-sm)",
+            fontSize: "0.92em",
+          }}
+        >
+          {match[2]}
+        </code>
+      );
+    } else if (match[3]) {
+      // **bold**
+      parts.push(
+        <strong
+          key={`${keyBase}-${key++}`}
+          style={{ fontWeight: 600, color: "var(--text-primary)" }}
+        >
+          {match[4]}
+        </strong>
+      );
+    } else if (match[5]) {
+      // *italic*
+      parts.push(
+        <em key={`${keyBase}-${key++}`} style={{ fontStyle: "italic" }}>
+          {match[6]}
+        </em>
+      );
+    }
+    lastIdx = match.index + match[0].length;
+  }
+  if (lastIdx < text.length) {
+    parts.push(text.slice(lastIdx));
+  }
+  return parts.length > 0 ? parts : [text];
 }
 
-function SpeakerOffIcon({ className = "" }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      width="16"
-      height="16"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
-      <line x1="23" y1="9" x2="17" y2="15" />
-      <line x1="17" y1="9" x2="23" y2="15" />
-    </svg>
-  );
-}
+function MarkdownContent({ text }: { text: string }) {
+  const blocks = useMemo(() => parseBlocks(text), [text]);
 
-function StopIcon({ className = "" }: { className?: string }) {
   return (
-    <svg
-      className={className}
-      width="14"
-      height="14"
-      viewBox="0 0 24 24"
-      fill="currentColor"
-      stroke="currentColor"
-      strokeWidth="2"
-    >
-      <rect x="4" y="4" width="16" height="16" rx="2" />
-    </svg>
+    <div className="space-y-3">
+      {blocks.map((block, i) => {
+        const key = `b-${i}`;
+        if (block.type === "code") {
+          return (
+            <pre
+              key={key}
+              className="font-mono overflow-x-auto"
+              style={{
+                background: "var(--bg-muted)",
+                color: "var(--text-primary)",
+                borderRadius: "var(--radius-md)",
+                padding: "12px 14px",
+                fontSize: "13px",
+                lineHeight: 1.55,
+              }}
+            >
+              <code>{block.content}</code>
+            </pre>
+          );
+        }
+        if (block.type === "ol") {
+          return (
+            <ol
+              key={key}
+              className="list-decimal list-outside pl-5 space-y-1.5"
+              style={{ color: "var(--text-primary)" }}
+            >
+              {block.items.map((item, idx) => (
+                <li key={idx}>{renderInline(item, `${key}-${idx}`)}</li>
+              ))}
+            </ol>
+          );
+        }
+        if (block.type === "ul") {
+          return (
+            <ul
+              key={key}
+              className="list-disc list-outside pl-5 space-y-1.5"
+              style={{ color: "var(--text-primary)" }}
+            >
+              {block.items.map((item, idx) => (
+                <li key={idx}>{renderInline(item, `${key}-${idx}`)}</li>
+              ))}
+            </ul>
+          );
+        }
+        // paragraph: single \n becomes a soft line break via
+        // white-space: pre-line (matches the old whitespace-pre-wrap
+        // behavior the original chat had).
+        return (
+          <p
+            key={key}
+            style={{
+              color: "var(--text-primary)",
+              whiteSpace: "pre-line",
+              margin: 0,
+            }}
+          >
+            {renderInline(block.content, key)}
+          </p>
+        );
+      })}
+    </div>
   );
 }
 
@@ -645,6 +822,13 @@ function ChatContent() {
     }
   }
 
+  // Pre-fills the input with a starter prompt. Pure UI affordance —
+  // user still hits Enter / Send to actually send. No machinery touched.
+  function applyStarterPrompt(text: string) {
+    setInput(text);
+    inputRef.current?.focus();
+  }
+
   // Knowledge Canvas panels derived from assistant messages
   const knowledgePanels = useMemo(() => {
     const panels: {
@@ -704,7 +888,10 @@ function ChatContent() {
   }, [messages]);
 
   return (
-    <div className="relative flex h-[calc(100vh-57px)]" style={{ background: 'var(--bg-base)' }}>
+    <div
+      className="relative flex h-[calc(100vh-57px)]"
+      style={{ background: "var(--bg-base)" }}
+    >
       {/* Floating voice indicator pill */}
       <VoiceIndicator
         isListening={voice.isListening}
@@ -716,20 +903,19 @@ function ChatContent() {
         className="hidden md:flex flex-col shrink-0"
         style={{
           width: 220,
-          background: 'var(--bg-warm)',
+          background: "var(--bg-muted)",
           borderRight: "1px solid var(--border)",
         }}
       >
-        {/* Logo + back */}
+        {/* Logo + back to dashboard */}
         <div className="flex items-center gap-2 px-4 py-3">
           <Link
             href="/dashboard"
-            className="text-sm font-bold transition-colors duration-150"
-            style={{ color: "var(--text-primary)" }}
-            onMouseEnter={(e) => (e.currentTarget.style.color = "var(--accent)")}
-            onMouseLeave={(e) => (e.currentTarget.style.color = "var(--text-primary)")}
+            className="flex items-center gap-1.5 font-serif text-[15px] transition-colors duration-150 text-[color:var(--text-primary)] hover:text-[color:var(--accent)]"
+            style={{ letterSpacing: "-0.01em" }}
           >
-            &larr; EduMind
+            <ArrowLeft size={14} />
+            EduMind
           </Link>
         </div>
 
@@ -737,51 +923,59 @@ function ChatContent() {
         <div className="px-3">
           <button
             onClick={handleNewChat}
-            className="w-full rounded-xl px-3 py-2 text-sm font-medium transition-colors duration-150 hover:bg-[var(--bg-muted)]"
+            className="w-full flex items-center justify-center gap-1.5 px-3 py-2 text-[13px] font-medium transition-colors duration-150 text-[color:var(--text-secondary)] hover:bg-[var(--bg-subtle)]"
             style={{
               border: "1px solid var(--border)",
-              color: "var(--text-secondary)",
+              borderRadius: "var(--radius-lg)",
             }}
           >
-            + New Chat
+            <Plus size={14} />
+            New Chat
           </button>
         </div>
 
         {/* Subjects label */}
-        <div className="px-4 mt-4 mb-2">
-          <p
-            className="text-xs font-medium uppercase"
-            style={{
-              color: "var(--text-tertiary)",
-              letterSpacing: "0.08em",
-            }}
-          >
-            Subjects
-          </p>
+        <div className="px-4 mt-5 mb-2">
+          <span className="label">Subjects</span>
         </div>
 
         {/* Subject list */}
         <nav className="flex-1 overflow-y-auto px-2 pb-3 space-y-0.5">
           {SUBJECTS.map((subject) => {
             const active = activeSubject === subject.name;
+            const Icon = SUBJECT_ICONS[subject.name];
             return (
               <button
                 key={subject.name}
                 onClick={() => handleSubjectClick(subject.name)}
-                className="w-full text-left px-3 py-2 rounded-lg text-sm flex items-center gap-2 transition-all duration-150"
+                className="w-full text-left px-3 py-2 text-[14px] flex items-center gap-2 transition-all duration-150"
                 style={{
                   background: active ? "var(--accent-light)" : "transparent",
                   color: active ? "var(--accent)" : "var(--text-secondary)",
                   fontWeight: active ? 500 : 400,
+                  borderRadius: "var(--radius-md)",
+                  borderLeft: active
+                    ? "3px solid var(--accent)"
+                    : "3px solid transparent",
                 }}
                 onMouseEnter={(e) => {
-                  if (!active) e.currentTarget.style.background = "var(--bg-muted)";
+                  if (!active)
+                    e.currentTarget.style.background = "var(--bg-subtle)";
                 }}
                 onMouseLeave={(e) => {
                   if (!active) e.currentTarget.style.background = "transparent";
                 }}
               >
-                <span className="text-base">{subject.emoji}</span>
+                {Icon && (
+                  <Icon
+                    size={16}
+                    style={{
+                      color: active
+                        ? "var(--accent)"
+                        : "var(--text-tertiary)",
+                    }}
+                  />
+                )}
                 {subject.name}
               </button>
             );
@@ -800,64 +994,77 @@ function ChatContent() {
             className="absolute left-0 top-0 bottom-0 flex flex-col"
             style={{
               width: 260,
-              background: 'var(--bg-warm)',
+              background: "var(--bg-muted)",
               borderRight: "1px solid var(--border)",
             }}
           >
             <div className="flex items-center justify-between px-4 py-3">
               <Link
                 href="/dashboard"
-                className="text-sm font-bold"
-                style={{ color: "var(--text-primary)" }}
+                className="flex items-center gap-1.5 font-serif text-[15px] text-[color:var(--text-primary)]"
+                style={{ letterSpacing: "-0.01em" }}
               >
-                &larr; EduMind
+                <ArrowLeft size={14} />
+                EduMind
               </Link>
               <button
                 onClick={() => setSidebarOpen(false)}
-                className="transition-colors p-1"
+                className="p-1 transition-colors"
                 style={{ color: "var(--text-tertiary)" }}
+                aria-label="Close menu"
               >
-                ✕
+                <X size={18} />
               </button>
             </div>
             <div className="px-3">
               <button
                 onClick={handleNewChat}
-                className="w-full rounded-xl px-3 py-2 text-sm font-medium transition-colors duration-150 hover:bg-[var(--bg-muted)]"
+                className="w-full flex items-center justify-center gap-1.5 px-3 py-2 text-[13px] font-medium transition-colors duration-150 text-[color:var(--text-secondary)] hover:bg-[var(--bg-subtle)]"
                 style={{
                   border: "1px solid var(--border)",
-                  color: "var(--text-secondary)",
+                  borderRadius: "var(--radius-lg)",
                 }}
               >
-                + New Chat
+                <Plus size={14} />
+                New Chat
               </button>
             </div>
-            <div className="px-4 mt-4 mb-2">
-              <p
-                className="text-xs font-medium uppercase"
-                style={{
-                  color: "var(--text-tertiary)",
-                  letterSpacing: "0.08em",
-                }}
-              >
-                Subjects
-              </p>
+            <div className="px-4 mt-5 mb-2">
+              <span className="label">Subjects</span>
             </div>
             <nav className="flex-1 overflow-y-auto px-2 pb-3 space-y-0.5">
               {SUBJECTS.map((subject) => {
                 const active = activeSubject === subject.name;
+                const Icon = SUBJECT_ICONS[subject.name];
                 return (
                   <button
                     key={subject.name}
                     onClick={() => handleSubjectClick(subject.name)}
-                    className="w-full text-left px-3 py-2 rounded-lg text-sm flex items-center gap-2 transition-all duration-150"
+                    className="w-full text-left px-3 py-2 text-[14px] flex items-center gap-2 transition-all duration-150"
                     style={{
-                      background: active ? "var(--accent-light)" : "transparent",
-                      color: active ? "var(--accent)" : "var(--text-secondary)",
+                      background: active
+                        ? "var(--accent-light)"
+                        : "transparent",
+                      color: active
+                        ? "var(--accent)"
+                        : "var(--text-secondary)",
                       fontWeight: active ? 500 : 400,
+                      borderRadius: "var(--radius-md)",
+                      borderLeft: active
+                        ? "3px solid var(--accent)"
+                        : "3px solid transparent",
                     }}
                   >
-                    <span className="text-base">{subject.emoji}</span>
+                    {Icon && (
+                      <Icon
+                        size={16}
+                        style={{
+                          color: active
+                            ? "var(--accent)"
+                            : "var(--text-tertiary)",
+                        }}
+                      />
+                    )}
                     {subject.name}
                   </button>
                 );
@@ -869,38 +1076,49 @@ function ChatContent() {
 
       {/* ═══ MAIN AREA (right of sidebar) ═══ */}
       <div className="flex flex-1 flex-col min-w-0 min-h-0">
-        {/* ── TOP BAR ── */}
+        {/* ── TOP BAR ──
+         *  Frosted glass over scrolling messages. Uses --bg-base derived
+         *  rgba (replaces the old warm-cream rgba). */}
         <div
           className="flex items-center justify-between px-4 shrink-0"
           style={{
             height: 48,
-            background: 'rgba(249,247,243,0.94)',
-            backdropFilter: 'blur(10px)',
+            background: "rgba(248, 249, 254, 0.94)",
+            backdropFilter: "blur(12px)",
+            WebkitBackdropFilter: "blur(12px)",
             borderBottom: "1px solid var(--border)",
           }}
         >
           {/* Left: mobile hamburger */}
           <button
             onClick={() => setSidebarOpen(true)}
-            className="md:hidden p-1.5 rounded-lg transition-colors hover:bg-[var(--bg-muted)]"
-            style={{ color: "var(--text-primary)" }}
+            className="md:hidden p-1.5 transition-colors hover:bg-[var(--bg-subtle)]"
+            style={{
+              color: "var(--text-primary)",
+              borderRadius: "var(--radius-md)",
+            }}
+            aria-label="Open menu"
           >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-              <line x1="3" y1="6" x2="21" y2="6" />
-              <line x1="3" y1="12" x2="21" y2="12" />
-              <line x1="3" y1="18" x2="21" y2="18" />
-            </svg>
+            <Menu size={18} />
           </button>
 
-          {/* Center: subject name */}
-          <div className="flex-1 flex items-center justify-center">
+          {/* Center: subject indicator */}
+          <div className="flex-1 flex items-center justify-center gap-1.5">
+            {activeSubject &&
+              (() => {
+                const Icon = SUBJECT_ICONS[activeSubject];
+                return Icon ? (
+                  <Icon
+                    size={14}
+                    style={{ color: "var(--text-tertiary)" }}
+                  />
+                ) : null;
+              })()}
             <span
-              className="text-sm font-medium truncate max-w-xs"
+              className="font-sans text-[13px] font-medium truncate max-w-xs"
               style={{ color: "var(--text-primary)" }}
             >
-              {activeSubject
-                ? `${SUBJECTS.find((s) => s.name === activeSubject)?.emoji ?? ""} ${activeSubject}`
-                : "Free Chat"}
+              {activeSubject ?? "Free Chat"}
             </span>
           </div>
 
@@ -912,15 +1130,16 @@ function ChatContent() {
                 {voice.isSpeaking && (
                   <button
                     onClick={voice.stopSpeaking}
-                    className="flex items-center gap-1 text-xs font-medium px-2 py-1.5 rounded-lg border transition-colors"
+                    className="flex items-center gap-1 text-xs font-medium px-2 py-1.5 transition-colors"
                     style={{
-                      background: "rgba(239,68,68,0.08)",
-                      color: "var(--accent-red)",
-                      borderColor: "rgba(239,68,68,0.2)",
+                      background: "var(--error-bg)",
+                      color: "var(--error)",
+                      border: "1px solid rgba(239,68,68,0.2)",
+                      borderRadius: "var(--radius-md)",
                     }}
                     title="Stop speaking"
                   >
-                    <StopIcon />
+                    <Square size={12} fill="currentColor" />
                     <span className="hidden sm:inline">Stop</span>
                   </button>
                 )}
@@ -932,13 +1151,18 @@ function ChatContent() {
                       posthog.capture("voice_mode_enabled");
                     }
                   }}
-                  className="p-1.5 rounded-lg transition-colors duration-150"
+                  className="p-1.5 transition-colors duration-150"
                   style={{
-                    background: voice.voiceOutputEnabled ? "var(--accent-light)" : "transparent",
-                    color: voice.voiceOutputEnabled ? "var(--accent)" : "var(--text-tertiary)",
+                    background: voice.voiceOutputEnabled
+                      ? "var(--accent-light)"
+                      : "transparent",
+                    color: voice.voiceOutputEnabled
+                      ? "var(--accent)"
+                      : "var(--text-tertiary)",
                     border: voice.voiceOutputEnabled
                       ? "1px solid var(--accent)"
                       : "1px solid var(--border)",
+                    borderRadius: "var(--radius-md)",
                   }}
                   title={
                     voice.voiceOutputEnabled
@@ -947,9 +1171,9 @@ function ChatContent() {
                   }
                 >
                   {voice.voiceOutputEnabled ? (
-                    <SpeakerOnIcon />
+                    <Volume2 size={14} />
                   ) : (
-                    <SpeakerOffIcon />
+                    <VolumeX size={14} />
                   )}
                 </button>
 
@@ -967,35 +1191,37 @@ function ChatContent() {
             {conversationId && messages.length >= 4 && (
               <>
                 {quizGenError && (
-                  <span className="text-xs" style={{ color: "var(--accent-red)" }}>
+                  <span
+                    className="text-[11px]"
+                    style={{ color: "var(--error)" }}
+                  >
                     Something went wrong
                   </span>
                 )}
                 <button
                   onClick={handleQuizMe}
                   disabled={isGeneratingQuiz || isLoading}
-                  className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full transition-colors duration-150 disabled:opacity-50"
+                  className="flex items-center gap-1.5 text-[12px] font-medium px-3 py-1.5 transition-colors duration-150 disabled:opacity-50 text-[color:var(--text-secondary)] hover:text-[color:var(--accent)] hover:border-[color:var(--accent)]"
                   style={{
                     border: "1px solid var(--border)",
-                    color: "var(--text-secondary)",
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.borderColor = "var(--accent)";
-                    e.currentTarget.style.color = "var(--accent)";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.borderColor = "var(--border)";
-                    e.currentTarget.style.color = "var(--text-secondary)";
+                    borderRadius: "var(--radius-pill)",
                   }}
                 >
                   {isGeneratingQuiz ? (
                     <>
-                      <span className="animate-spin">⏳</span> Generating...
+                      <Loader2 size={12} className="animate-spin" />
+                      Generating…
                     </>
                   ) : quizGenError ? (
-                    <>🔄 Retry Quiz</>
+                    <>
+                      <RefreshCw size={12} />
+                      Retry quiz
+                    </>
                   ) : (
-                    <>📝 Quiz Me</>
+                    <>
+                      <FileQuestion size={12} />
+                      Quiz me
+                    </>
                   )}
                 </button>
               </>
@@ -1005,19 +1231,22 @@ function ChatContent() {
             <button
               type="button"
               onClick={() => setFocusMode(!focusMode)}
-              className="text-xs px-2 py-1 rounded-lg transition-colors duration-150"
+              className="text-[12px] font-medium px-2.5 py-1 transition-colors duration-150"
               style={{
                 color: focusMode ? "var(--accent)" : "var(--text-tertiary)",
                 background: focusMode ? "var(--accent-light)" : "transparent",
+                borderRadius: "var(--radius-md)",
               }}
               onMouseEnter={(e) => {
-                if (!focusMode) e.currentTarget.style.color = "var(--text-secondary)";
+                if (!focusMode)
+                  e.currentTarget.style.color = "var(--text-secondary)";
               }}
               onMouseLeave={(e) => {
-                if (!focusMode) e.currentTarget.style.color = "var(--text-tertiary)";
+                if (!focusMode)
+                  e.currentTarget.style.color = "var(--text-tertiary)";
               }}
             >
-              {focusMode ? "Exit Focus" : "Focus"}
+              {focusMode ? "Exit focus" : "Focus"}
             </button>
           </div>
         </div>
@@ -1032,30 +1261,63 @@ function ChatContent() {
           {/* LEFT: conversation thread */}
           <div className="flex flex-1 flex-col min-w-0 min-h-0">
             {/* Messages area */}
-            <div className="flex-1 min-h-0 overflow-y-auto px-6 py-6" style={{ background: 'var(--bg-base)' }}>
+            <div
+              className="flex-1 min-h-0 overflow-y-auto px-6 py-6"
+              style={{ background: "var(--bg-base)" }}
+            >
               <div className="max-w-[680px] mx-auto space-y-5">
                 {messages.length === 0 && !isLoading && (
-                  <div className="text-center py-20">
-                    <div className="text-5xl mb-4">🎓</div>
+                  <div className="text-center py-16 md:py-20">
+                    <span className="label">Start a session</span>
                     <h2
-                      className="font-serif text-[26px] font-normal mb-2"
-                      style={{ color: "var(--text-primary)", letterSpacing: "-0.3px" }}
+                      className="font-serif font-normal mt-3"
+                      style={{
+                        color: "var(--text-primary)",
+                        fontSize: "clamp(26px, 3.5vw, 36px)",
+                        lineHeight: 1.2,
+                        letterSpacing: "-0.015em",
+                      }}
                     >
-                      Welcome to EduMind
+                      What do you want to learn today?
                     </h2>
                     <p
-                      className="max-w-md mx-auto"
-                      style={{ color: "var(--text-secondary)" }}
+                      className="font-sans text-[14px] max-w-md mx-auto mt-3"
+                      style={{
+                        color: "var(--text-secondary)",
+                        lineHeight: 1.6,
+                      }}
                     >
-                      Pick a subject from the sidebar, or just ask me anything you
-                      want to learn.
+                      Pick a subject from the sidebar, type any JEE or NEET
+                      question, or try one of these to get started.
                     </p>
+
+                    {/* Starter prompt chips — pre-fill the input on click.
+                     *  Pure UI affordance, no machinery change. */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-8 max-w-md mx-auto">
+                      {STARTER_PROMPTS.map((prompt) => (
+                        <button
+                          key={prompt}
+                          onClick={() => applyStarterPrompt(prompt)}
+                          className="text-left px-4 py-3 text-[13px] transition-all duration-150 text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)] hover:border-[color:var(--accent)] hover:-translate-y-[1px]"
+                          style={{
+                            background: "var(--bg-surface)",
+                            border: "1px solid var(--border)",
+                            borderRadius: "var(--radius-lg)",
+                            boxShadow: "var(--shadow-xs)",
+                            lineHeight: 1.4,
+                          }}
+                        >
+                          {prompt}
+                        </button>
+                      ))}
+                    </div>
+
                     {voice.speechSupported && (
                       <p
-                        className="text-sm mt-4"
+                        className="font-sans text-[12px] mt-6"
                         style={{ color: "var(--text-tertiary)" }}
                       >
-                        🎤 You can also tap the microphone or hold Space to speak
+                        Tip: tap the microphone or hold Space to speak.
                       </p>
                     )}
                   </div>
@@ -1067,43 +1329,50 @@ function ChatContent() {
                     <div key={i}>
                       {/* Quick Quiz banner — every 10 messages */}
                       {i > 0 && i % 10 === 0 && msg.role === "user" && (
-                        <div className="my-3 mx-auto max-w-md">
+                        <div className="my-4 mx-auto max-w-md">
                           <Link
                             href={`/quiz${
                               activeSubject
                                 ? `?subject=${encodeURIComponent(activeSubject)}`
                                 : ""
                             }`}
-                            className="block rounded-2xl px-4 py-3 text-center transition-colors duration-150"
+                            className="block px-4 py-3 text-center transition-colors duration-150"
                             style={{
                               background: "var(--accent-light)",
                               border: "1px solid var(--border)",
+                              borderRadius: "var(--radius-xl)",
                             }}
                             onMouseEnter={(e) => {
-                              e.currentTarget.style.borderColor = "var(--accent)";
+                              e.currentTarget.style.borderColor =
+                                "var(--accent)";
                             }}
                             onMouseLeave={(e) => {
-                              e.currentTarget.style.borderColor = "var(--border)";
+                              e.currentTarget.style.borderColor =
+                                "var(--border)";
                             }}
                           >
                             <p
-                              className="text-sm font-medium"
+                              className="font-sans text-[13px] font-medium"
                               style={{ color: "var(--text-primary)" }}
                             >
-                              Ready to test what you&apos;ve learned? Take a quick quiz
-                              {activeSubject ? ` on ${activeSubject}` : ""}!
+                              Ready to test what you&apos;ve learned? Take a
+                              quick quiz
+                              {activeSubject ? ` on ${activeSubject}` : ""}.
                             </p>
                             <p
-                              className="text-xs mt-1"
+                              className="font-sans text-[12px] mt-1"
                               style={{ color: "var(--accent)" }}
                             >
-                              Click here to start &rarr;
+                              Start quiz →
                             </p>
                           </Link>
                         </div>
                       )}
 
                       {isUser ? (
+                        // STUDENT BUBBLE — right-aligned, soft violet tint,
+                        // slate-primary text. Matches the product preview
+                        // demo on the landing.
                         <motion.div
                           initial={{ opacity: 0, y: 8 }}
                           animate={{ opacity: 1, y: 0 }}
@@ -1111,60 +1380,66 @@ function ChatContent() {
                           className="flex justify-end"
                         >
                           <div
-                            className="max-w-[75%] rounded-2xl rounded-tr-sm px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap text-white"
-                            style={{ background: "var(--accent)" }}
+                            className="font-sans text-[14px] leading-relaxed whitespace-pre-wrap"
+                            style={{
+                              maxWidth: "78%",
+                              background: "var(--accent-light)",
+                              color: "var(--text-primary)",
+                              padding: "12px 16px",
+                              borderRadius: "var(--radius-2xl)",
+                              borderTopRightRadius: "var(--radius-sm)",
+                            }}
                           >
                             {msg.content}
                           </div>
                         </motion.div>
                       ) : (
+                        // TUTOR BUBBLE — left-aligned, clean white surface
+                        // with subtle elevation. No avatar — the surface
+                        // treatment + alignment differentiate.
                         <motion.div
                           initial={{ opacity: 0, y: 8 }}
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ duration: 0.2 }}
-                          className="flex justify-start gap-2.5"
+                          className="flex justify-start"
                         >
-                          {/* EM badge */}
                           <div
-                            className="mt-1 shrink-0 flex items-center justify-center rounded-full text-[10px] font-bold text-white"
                             style={{
-                              width: 24,
-                              height: 24,
-                              background: "var(--accent)",
+                              maxWidth: "85%",
+                              background: "var(--bg-surface)",
+                              border: "1px solid var(--border)",
+                              borderRadius: "var(--radius-2xl)",
+                              borderTopLeftRadius: "var(--radius-sm)",
+                              padding: "14px 18px",
+                              boxShadow: "var(--shadow-xs)",
                             }}
                           >
-                            EM
-                          </div>
-                          <div
-                            className="max-w-[75%] rounded-2xl rounded-tl-sm px-4 py-3"
-                            style={{ background: "var(--bg-muted)" }}
-                          >
                             <div
-                              className="whitespace-pre-wrap text-sm leading-relaxed"
-                              style={{ color: "var(--text-primary)" }}
+                              className="font-serif text-[15px]"
+                              style={{
+                                color: "var(--text-primary)",
+                                lineHeight: 1.65,
+                              }}
                             >
-                              {msg.content}
+                              <MarkdownContent text={msg.content} />
                             </div>
                             {voice.synthSupported && (
                               <div className="mt-2 flex items-center gap-2 text-[11px]">
                                 {voice.speakingMessageIndex === i ? (
                                   <button
                                     onClick={voice.stopSpeaking}
-                                    className="flex items-center gap-1 transition-colors"
-                                    style={{ color: "var(--accent-red)" }}
+                                    className="flex items-center gap-1 font-sans transition-colors"
+                                    style={{ color: "var(--error)" }}
                                   >
-                                    <StopIcon className="w-3 h-3" />
+                                    <Square size={10} fill="currentColor" />
                                     Stop
                                   </button>
                                 ) : (
                                   <button
                                     onClick={() => voice.speak(msg.content, i)}
-                                    className="flex items-center gap-1 transition-colors"
-                                    style={{ color: "var(--text-tertiary)" }}
-                                    onMouseEnter={(e) => (e.currentTarget.style.color = "var(--accent)")}
-                                    onMouseLeave={(e) => (e.currentTarget.style.color = "var(--text-tertiary)")}
+                                    className="flex items-center gap-1 font-sans transition-colors text-[color:var(--text-tertiary)] hover:text-[color:var(--accent)]"
                                   >
-                                    <SpeakerOnIcon className="w-3 h-3" />
+                                    <Volume2 size={10} />
                                     Listen
                                   </button>
                                 )}
@@ -1186,15 +1461,20 @@ function ChatContent() {
                     className="flex justify-start"
                   >
                     <div
-                      className="rounded-full px-3 py-3 flex items-center justify-center"
+                      className="px-4 py-3 flex items-center justify-center"
                       style={{
-                        background: "var(--bg-muted)",
+                        background: "var(--bg-surface)",
                         border: "1px solid var(--border)",
+                        borderRadius: "var(--radius-2xl)",
+                        boxShadow: "var(--shadow-xs)",
                       }}
                     >
                       <div
-                        className="w-[120px] h-[2px] rounded-full overflow-hidden"
-                        style={{ background: "var(--border)" }}
+                        className="w-[120px] h-[2px] overflow-hidden"
+                        style={{
+                          background: "var(--bg-muted)",
+                          borderRadius: "var(--radius-pill)",
+                        }}
                       >
                         <div className="neural-wave h-full w-1/2 rounded-full" />
                       </div>
@@ -1211,11 +1491,14 @@ function ChatContent() {
               <div
                 className="px-4 py-2"
                 style={{
-                  background: "rgba(239,68,68,0.06)",
+                  background: "var(--error-bg)",
                   borderTop: "1px solid rgba(239,68,68,0.15)",
                 }}
               >
-                <p className="text-xs text-center" style={{ color: "var(--accent-red)" }}>
+                <p
+                  className="text-[12px] text-center font-sans"
+                  style={{ color: "var(--error)" }}
+                >
                   {voice.micError}
                   <button
                     onClick={() => voice.toggleListening()}
@@ -1232,7 +1515,7 @@ function ChatContent() {
               <div
                 className="px-4 py-2"
                 style={{
-                  background: "rgba(239,68,68,0.06)",
+                  background: "var(--error-bg)",
                   borderTop: "1px solid rgba(239,68,68,0.12)",
                 }}
               >
@@ -1242,19 +1525,28 @@ function ChatContent() {
                       <div
                         key={idx}
                         className="input-wave-bar w-[3px] rounded-full"
-                        style={{ animationDelay: `${idx * 0.1}s`, background: "var(--accent-red)" }}
+                        style={{
+                          animationDelay: `${idx * 0.1}s`,
+                          background: "var(--error)",
+                        }}
                       />
                     ))}
                   </div>
-                  <span className="text-xs font-medium" style={{ color: "var(--accent-red)" }}>
-                    Listening... speak now
+                  <span
+                    className="font-sans text-[12px] font-medium"
+                    style={{ color: "var(--error)" }}
+                  >
+                    Listening… speak now
                   </span>
                   <div className="flex items-center gap-[3px] h-4">
                     {[0, 1, 2, 3, 4].map((idx) => (
                       <div
                         key={idx}
                         className="input-wave-bar w-[3px] rounded-full"
-                        style={{ animationDelay: `${(4 - idx) * 0.1}s`, background: "var(--accent-red)" }}
+                        style={{
+                          animationDelay: `${(4 - idx) * 0.1}s`,
+                          background: "var(--error)",
+                        }}
                       />
                     ))}
                   </div>
@@ -1269,22 +1561,12 @@ function ChatContent() {
             >
               <form
                 onSubmit={handleSubmit}
-                className="relative mx-auto flex max-w-[680px] items-center gap-2 rounded-2xl px-4 py-2"
+                className="relative mx-auto flex max-w-[680px] items-end gap-2 px-3 py-2 transition-all duration-150 focus-within:border-[color:var(--accent)] focus-within:[box-shadow:0_0_0_3px_var(--accent-light)]"
                 style={{
-                  background: "var(--bg-muted)",
+                  background: "var(--bg-surface)",
                   border: "1px solid var(--border)",
-                }}
-                onFocus={(e) => {
-                  const form = e.currentTarget;
-                  form.style.borderColor = "var(--accent)";
-                  form.style.boxShadow = "0 0 0 2px var(--accent-light)";
-                }}
-                onBlur={(e) => {
-                  if (!e.currentTarget.contains(e.relatedTarget as Node)) {
-                    const form = e.currentTarget;
-                    form.style.borderColor = "var(--border)";
-                    form.style.boxShadow = "none";
-                  }
+                  borderRadius: "var(--radius-2xl)",
+                  boxShadow: "var(--shadow-xs)",
                 }}
               >
                 <textarea
@@ -1293,10 +1575,10 @@ function ChatContent() {
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={handleKeyDown}
                   placeholder={
-                    voice.isListening ? "Listening..." : "Ask me anything..."
+                    voice.isListening ? "Listening…" : "Ask anything…"
                   }
                   rows={1}
-                  className="flex-1 resize-none bg-transparent border-none text-sm placeholder:text-[var(--text-tertiary)] focus:outline-none"
+                  className="flex-1 resize-none bg-transparent border-none font-sans text-[14px] placeholder:text-[color:var(--text-tertiary)] focus:outline-none py-2"
                   style={{ color: "var(--text-primary)" }}
                 />
 
@@ -1306,43 +1588,42 @@ function ChatContent() {
                     type="button"
                     onClick={voice.toggleListening}
                     className={`shrink-0 w-9 h-9 rounded-full flex items-center justify-center transition-all duration-150 ${
-                      voice.isListening
-                        ? "bg-red-500 text-white mic-active"
-                        : ""
+                      voice.isListening ? "mic-active" : ""
                     }`}
                     style={
-                      !voice.isListening
+                      voice.isListening
                         ? {
-                            background: "var(--bg-subtle)",
+                            background: "var(--error)",
+                            color: "white",
+                          }
+                        : {
+                            background: "var(--bg-muted)",
                             color: "var(--text-secondary)",
                           }
-                        : undefined
                     }
                     title={
-                      voice.isListening ? "Stop listening" : "Start voice input"
+                      voice.isListening
+                        ? "Stop listening"
+                        : "Start voice input"
                     }
                   >
-                    <MicIcon
-                      className={voice.isListening ? "text-white" : ""}
-                    />
+                    <Mic size={16} />
                   </button>
                 )}
 
-                {/* Send button */}
+                {/* Send button — uses .btn-primary visual (gradient pill
+                 *  with glow) for consistency with the rest of the app. */}
                 <button
                   type="submit"
                   disabled={isLoading || !input.trim()}
-                  className="shrink-0 rounded-xl px-4 py-2 text-xs font-medium text-white transition-all duration-150 disabled:opacity-40"
-                  style={{ background: "var(--accent)" }}
-                  onMouseEnter={(e) => {
-                    if (!e.currentTarget.disabled)
-                      e.currentTarget.style.background = "var(--accent)";
+                  className="shrink-0 btn-primary disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center"
+                  style={{
+                    fontSize: 13,
+                    padding: "9px 14px",
                   }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = "var(--accent)";
-                  }}
+                  aria-label="Send message"
                 >
-                  Send
+                  <ArrowUp size={14} />
                 </button>
               </form>
             </div>
@@ -1351,7 +1632,7 @@ function ChatContent() {
           {/* RIGHT: Knowledge Canvas (hidden in focus mode) */}
           {!focusMode && (
             <aside
-              className="hidden lg:block shrink-0 overflow-y-auto px-4 py-4"
+              className="hidden lg:block shrink-0 overflow-y-auto px-4 py-5"
               style={{
                 width: 320,
                 background: "var(--bg-muted)",
@@ -1359,24 +1640,20 @@ function ChatContent() {
               }}
             >
               <div className="sticky top-4 space-y-3">
-                <div
-                  className="text-xs font-medium uppercase"
-                  style={{
-                    color: "var(--text-tertiary)",
-                    letterSpacing: "0.08em",
-                  }}
-                >
-                  Knowledge Canvas
-                </div>
+                <span className="label">Knowledge canvas</span>
                 {knowledgePanels.length === 0 ? (
-                  <div
-                    className="text-sm mt-6"
-                    style={{ color: "var(--text-tertiary)" }}
+                  <p
+                    className="font-sans text-[13px] mt-4"
+                    style={{
+                      color: "var(--text-tertiary)",
+                      lineHeight: 1.5,
+                    }}
                   >
-                    Insights will appear here as you learn.
-                  </div>
+                    Insights from this conversation will appear here —
+                    definitions, steps, and code snippets.
+                  </p>
                 ) : (
-                  <div className="space-y-3">
+                  <div className="space-y-3 mt-3">
                     {knowledgePanels.map((panel) => (
                       <motion.div
                         key={panel.id}
@@ -1387,20 +1664,26 @@ function ChatContent() {
                       >
                         {panel.type === "code" ? (
                           <div
-                            className="rounded-xl p-3"
-                            style={{ background: 'var(--bg-base)', border: "1px solid var(--border)" }}
+                            className="p-3"
+                            style={{
+                              background: "var(--bg-surface)",
+                              border: "1px solid var(--border)",
+                              borderRadius: "var(--radius-lg)",
+                              boxShadow: "var(--shadow-xs)",
+                            }}
                           >
                             <div
-                              className="text-[11px] font-medium mb-1.5"
+                              className="font-sans text-[11px] font-semibold mb-1.5"
                               style={{ color: "var(--text-secondary)" }}
                             >
                               {panel.title}
                             </div>
                             <pre
-                              className="text-[11px] font-mono rounded-lg p-3 overflow-x-auto"
+                              className="text-[11px] font-mono p-3 overflow-x-auto"
                               style={{
                                 color: "var(--text-primary)",
                                 background: "var(--bg-muted)",
+                                borderRadius: "var(--radius-md)",
                               }}
                             >
                               {panel.content}
@@ -1408,44 +1691,58 @@ function ChatContent() {
                           </div>
                         ) : panel.type === "definition" ? (
                           <div
-                            className="rounded-xl p-3"
+                            className="p-3"
                             style={{
-                              background: 'var(--bg-base)',
+                              background: "var(--bg-surface)",
                               border: "1px solid var(--border)",
-                              borderLeftColor: "var(--accent)",
-                              borderLeftWidth: 3,
+                              borderLeft: "3px solid var(--accent)",
+                              borderRadius: "var(--radius-lg)",
+                              boxShadow: "var(--shadow-xs)",
                             }}
                           >
                             <div
-                              className="text-[11px] font-medium mb-1"
-                              style={{ color: "var(--text-secondary)" }}
+                              className="font-sans text-[11px] font-semibold mb-1"
+                              style={{ color: "var(--accent)" }}
                             >
                               {panel.title}
                             </div>
                             <div
-                              className="text-xs leading-relaxed"
-                              style={{ color: "var(--text-secondary)" }}
+                              className="font-serif text-[13px]"
+                              style={{
+                                color: "var(--text-secondary)",
+                                lineHeight: 1.55,
+                              }}
                             >
                               {panel.content}
                             </div>
                           </div>
                         ) : (
                           <div
-                            className="rounded-xl p-3"
-                            style={{ background: 'var(--bg-base)', border: "1px solid var(--border)" }}
+                            className="p-3"
+                            style={{
+                              background: "var(--bg-surface)",
+                              border: "1px solid var(--border)",
+                              borderRadius: "var(--radius-lg)",
+                              boxShadow: "var(--shadow-xs)",
+                            }}
                           >
                             <div
-                              className="text-[11px] font-medium mb-1.5"
+                              className="font-sans text-[11px] font-semibold mb-1.5"
                               style={{ color: "var(--text-secondary)" }}
                             >
                               {panel.title}
                             </div>
                             <ul
-                              className="list-decimal list-inside text-xs space-y-0.5"
-                              style={{ color: "var(--text-secondary)" }}
+                              className="list-decimal list-inside font-sans text-[12px] space-y-0.5"
+                              style={{
+                                color: "var(--text-secondary)",
+                                lineHeight: 1.5,
+                              }}
                             >
                               {panel.content.split("\n").map((line, idx) => (
-                                <li key={idx}>{line.replace(/^\s*\d+\.\s*/, "")}</li>
+                                <li key={idx}>
+                                  {line.replace(/^\s*\d+\.\s*/, "")}
+                                </li>
                               ))}
                             </ul>
                           </div>
@@ -1472,7 +1769,12 @@ function ChatContent() {
         reason={upgradeReason}
       />
 
-      {/* Neural wave keyframes */}
+      {/* ─── Local animation keyframes ──────────────────────────
+       *  neural-wave: the "thinking" bar gradient sweep
+       *  input-wave-bar: the listening indicator bar scale wave
+       *  mic-active: the mic button pulsing ring when recording
+       *  The latter two were previously referenced as classNames but
+       *  never defined anywhere — fixed here.                      */}
       <style jsx global>{`
         @keyframes neuralWave {
           0% {
@@ -1490,6 +1792,32 @@ function ChatContent() {
           );
           animation: neuralWave 1.2s linear infinite;
         }
+
+        @keyframes waveBar {
+          0%, 100% {
+            transform: scaleY(0.35);
+          }
+          50% {
+            transform: scaleY(1);
+          }
+        }
+        .input-wave-bar {
+          height: 100%;
+          transform-origin: center;
+          animation: waveBar 1s ease-in-out infinite;
+        }
+
+        @keyframes micPulse {
+          0%, 100% {
+            box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.5);
+          }
+          50% {
+            box-shadow: 0 0 0 8px rgba(239, 68, 68, 0);
+          }
+        }
+        .mic-active {
+          animation: micPulse 1.5s ease-in-out infinite;
+        }
       `}</style>
     </div>
   );
@@ -1503,7 +1831,12 @@ export default function ChatPage() {
           className="flex items-center justify-center h-[calc(100vh-57px)]"
           style={{ background: "var(--bg-base)" }}
         >
-          <div style={{ color: "var(--text-tertiary)" }}>Loading...</div>
+          <div
+            className="font-sans text-[13px]"
+            style={{ color: "var(--text-tertiary)" }}
+          >
+            Loading…
+          </div>
         </div>
       }
     >
