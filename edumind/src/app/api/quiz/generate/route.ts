@@ -2,6 +2,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { auth } from "@clerk/nextjs/server";
 import { supabaseAdmin as supabase } from "@/lib/supabaseAdmin";
 import { rateLimit } from "@/lib/ratelimit";
+import { verifyQuizQuestions, type VerifiableQuestion } from "@/lib/verifyQuiz";
 import { NextRequest, NextResponse } from "next/server";
 
 const client = new Anthropic();
@@ -38,8 +39,14 @@ async function callQuizAPI(
   userPrompt: string
 ): Promise<QuizData> {
   const apiCall = client.messages.create({
+    // Haiku is fine here. Answer-correctness is handled structurally by
+    // the prompt — the JSON schema emits "explanation" before
+    // "correct_answer", so the model works the full solution first and
+    // then states the answer conditioned on it (reason-before-answer).
+    // That fixes the mismatch class; a bigger model does not.
     model: "claude-haiku-4-5-20251001",
-    max_tokens: 2048,
+    // Bumped from 2048: explanations are now full worked solutions.
+    max_tokens: 4096,
     system: systemPrompt,
     messages: [{ role: "user", content: userPrompt }],
   });
@@ -173,6 +180,11 @@ export async function POST(request: NextRequest) {
 
   const systemPrompt = `Respond with ONLY a raw JSON object. No markdown, no backticks, no explanation. Start directly with { and end with }. You are a quiz generator for EduMind, an AI tutor for Indian JEE and NEET aspirants. Create engaging, accurate quizzes grounded in the tutoring conversation provided.
 
+ANSWER ACCURACY — the single most important rule. This is a study tool; a wrong answer key marks a correct student wrong and destroys trust.
+- Solve each question completely BEFORE committing to it. The "correct_answer" field MUST equal exactly the value your "explanation" works through to — they must never disagree.
+- Do every calculation carefully and re-check the arithmetic before finalizing. For multiple_choice, correct_answer must be the exact text of the matching option, and that option must appear in the options array.
+- Present clean, correct working in the explanation. NEVER include "wait, recalculating", "actually", or any visible self-correction — if you catch a mistake, fix it silently and make sure correct_answer reflects the corrected final result.
+
 MATH NOTATION: Write all mathematics in plain Unicode characters only. NEVER use LaTeX or TeX syntax — no \\frac, \\sqrt, \\boxed, \\pm, \\le, \\ge, \\theta, \\pi, \\int, \\sum, \\cdot, \\times, $$...$$, $...$, ^{...}, _{...}. Use Unicode: x², √x, b/a, (b² - 4ac) / (2a), ±, ≤, ≥, ≠, ≈, θ, π, α, β, Δ, ∞, ∫, ∑, →, ·, ×, H₂O, CO₂. This applies to question text, options, AND correct answers — LaTeX appears as raw garbage characters in the quiz UI.
 
 QUESTION STYLE — authentic JEE/NEET exam framing.
@@ -207,7 +219,7 @@ Create exactly 5 questions:
 - 3 multiple choice (with 4 options each, labeled A/B/C/D)
 - 2 open-ended (short answer)
 
-Return a JSON object with this exact structure:
+Return a JSON object with this exact structure. Within each question keep this exact key order — "explanation" first (the full worked solution), then "options", then "correct_answer" last:
 {
   "title": "Quiz title based on topics covered",
   "questions": [
@@ -215,23 +227,70 @@ Return a JSON object with this exact structure:
       "question_number": 1,
       "question_type": "multiple_choice",
       "question_text": "The question text",
+      "explanation": "Full worked solution and reasoning",
       "options": ["A) Option one", "B) Option two", "C) Option three", "D) Option four"],
-      "correct_answer": "A",
-      "explanation": "Brief explanation of why this is correct"
+      "correct_answer": "A"
     },
     {
       "question_number": 4,
       "question_type": "open_ended",
       "question_text": "The open-ended question",
+      "explanation": "The worked solution / what a good answer should include",
       "options": [],
-      "correct_answer": "Expected answer or key points",
-      "explanation": "What a good answer should include"
+      "correct_answer": "Expected answer or key points"
     }
   ]
-}`;
+}
+
+Work through the full solution in "explanation" FIRST. Then, for multiple_choice, write exactly 4 options where ONE is the correct result of your worked solution and the other 3 are plausible distractors — never produce options that omit the computed correct answer. Finally set "correct_answer" to the letter (A/B/C/D) of the option that matches your worked result. The correct_answer must always match the result reached in the explanation.`;
 
   try {
     const quizData = await generateQuizWithRetry(systemPrompt, userPrompt);
+
+    // ─── Verification pass (Sonnet) ─────────────────────────
+    // Independently re-checks each question and drops any that fail
+    // (answer disagreeing with the worked solution, duplicate/ambiguous
+    // multiple-choice options, impossible or ambiguous premise) BEFORE
+    // we persist the quiz. On checker error we log and persist the
+    // unverified set — never crash quiz generation.
+    try {
+      const verifiable: VerifiableQuestion[] = quizData.questions.map((q) => ({
+        question: q.question_text,
+        type: q.question_type,
+        options: q.options ?? [],
+        correct_answer: q.correct_answer,
+        explanation: q.explanation,
+      }));
+      const verdicts = await verifyQuizQuestions(verifiable);
+      const validIdx = new Set(
+        verdicts.filter((v) => v.valid).map((v) => v.index)
+      );
+      const verified = quizData.questions.filter((_, i) => validIdx.has(i));
+      const dropped = verdicts.filter((v) => !v.valid);
+      if (dropped.length > 0) {
+        console.warn(
+          `Quiz verification dropped ${dropped.length}/${quizData.questions.length} question(s):`,
+          dropped.map((d) => `#${d.index}: ${d.reason ?? "flagged"}`)
+        );
+      }
+      // Keep the verified set if it leaves a usable quiz; renumber so the
+      // surviving questions stay contiguous (1..n). Otherwise fall back.
+      if (verified.length >= 2) {
+        verified.forEach((q, i) => {
+          q.question_number = i + 1;
+        });
+        quizData.questions = verified;
+      } else {
+        console.warn(
+          `Quiz verification left only ${verified.length} valid question(s); using unverified set.`
+        );
+      }
+    } catch (verifyErr) {
+      console.error(
+        "Quiz verification failed; persisting unverified questions:",
+        verifyErr
+      );
+    }
 
     // Save quiz to DB
     const { data: quiz, error: quizError } = await supabase
