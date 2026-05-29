@@ -132,10 +132,30 @@ export async function POST(request: NextRequest) {
 
   const subjectInstruction =
     subjectName === "Mixed/Random"
-      ? "Mix questions from various subjects: math, science, english, history, coding, languages, life skills, finance, health & fitness, art & music."
-      : `All questions should be about ${subjectName}.`;
+      ? "Mix questions across the four JEE/NEET subjects — Physics, Chemistry, Mathematics, and Biology — with a balanced spread."
+      : `All questions should be about ${subjectName} at the JEE/NEET level.`;
 
-  const systemPrompt = `Respond with ONLY a raw JSON array. No markdown, no backticks, no explanation. Start directly with [ and end with ]. You are a quiz generator for an educational platform.`;
+  const systemPrompt = `Respond with ONLY a raw JSON array. No markdown, no backticks, no explanation. Start directly with [ and end with ]. You are a quiz generator for EduMind, an AI tutor for Indian JEE and NEET aspirants. Quizzes test understanding of the JEE (Physics, Chemistry, Mathematics) and NEET (Physics, Chemistry, Biology) syllabi.
+
+MATH NOTATION: Write all mathematics in plain Unicode characters only. NEVER use LaTeX or TeX syntax — no \\frac, \\sqrt, \\boxed, \\pm, \\le, \\ge, \\theta, \\pi, \\int, \\sum, \\cdot, \\times, $$...$$, $...$, ^{...}, _{...}. Use Unicode: x², x³, √x, ∛x, b/a, (b² - 4ac) / (2a), ±, ≤, ≥, ≠, ≈, θ, π, α, β, λ, Δ, ∞, ∫, ∑, →, ·, ×, H₂O, CO₂. This applies to question text, options, AND correct answers — LaTeX appears as raw garbage characters in the quiz UI.
+
+QUESTION STYLE — authentic JEE/NEET exam framing.
+
+Questions must read like they could appear in an actual JEE Main, JEE Advanced, or NEET UG paper. Use the kinds of scenarios that show up in real exams and standard preparation textbooks (NCERT, HC Verma, DC Pandey, Irodov, Resnick-Halliday, Morrison & Boyd, Trueman's Biology):
+
+- Physics: projectiles, inclined planes, pulleys and strings, springs and oscillations, pendulums, electric circuits (resistors, capacitors, inductors, EMF sources), magnetic fields on current-carrying wires, lenses and mirrors, calorimetry, gas laws and thermodynamics, named physical objects (a block, particle, car, train, satellite, planet).
+- Chemistry: titrations, named reaction mechanisms (SN1, SN2, E1, E2, addition, elimination), equilibrium and stoichiometry with real substances, periodic-trend comparisons, electrochemical and galvanic cells, buffer solutions, IUPAC nomenclature, organic synthesis.
+- Mathematics: clean abstract problems — functions, limits, derivatives, integrals, vectors, 3D geometry, matrices and determinants, conics, probability and combinatorics, complex numbers, trigonometric identities. Textbook-style real-world wrappers (ladder against a wall, tower-and-shadow trig, max-min word problems) are fine.
+- Biology: cellular processes, anatomy and physiology of specific organ systems, Mendelian and molecular genetics, ecology and population dynamics, plant physiology, named organisms, real biological structures and pathways.
+
+DO NOT frame questions around:
+- Video games, gamers, game characters, NPCs, game maps, levels, XP, scoreboards, "the player runs at…", any gaming scenario
+- Pop culture: movies, TV shows, songs, celebrities, social-media scenarios
+- Casual everyday trivia ("Sarah goes shopping", "Tom texts his friend…")
+- Memes, internet culture, AI chatbots, apps or websites
+- Generic "fun" or gamified wrappers designed to feel relatable
+
+The voice should be calm, technical, and exam-appropriate — the kind of question a JEE/NEET aspirant has seen many times in their practice papers. Use concrete numbers and specific physical, chemical, or biological setups, not casual storytelling.`;
 
   const userPrompt = `Generate ${count} quiz questions about ${subjectName} at ${effectiveDifficulty} level for a student with this profile: ${assessmentSummary || "No profile available — use general difficulty level."}
 ${ageContext}
